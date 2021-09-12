@@ -1,0 +1,24 @@
+user_token: NmE0YzRjMzEtNTM2Zi00NDY5LThmNzItZTE1YmE2MTZkNGE4XzMw
+
+session:
+  key: t8BAvb1SagRDW86gv7TR4GVYvFIcbctqMkbsFmlDoLM=
+admin:
+  email: admin@admin.com
+  password: admin
+database:
+  host: localhost
+  port: 5432
+  user: bjbot
+  password: bjbot
+  database: bjbot_db
+redis:
+  host: localhost
+  port: 6379
+  user: bjbot
+  password: bjbot
+  db: 0
+bot:
+  token: 71537a16b313e2356b4fc47241558c813f25c22468524fad590a288c24713410349ea3603e95395a13a5c
+  group_id: 202369435
+
+
