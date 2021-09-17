@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
 @dataclass
 class Collections:
-    users: Optional["AsyncIOMotorCollection"] = None
+    players: Optional["AsyncIOMotorCollection"] = None
     admins: Optional["AsyncIOMotorCollection"] = None
 
 
@@ -38,11 +38,9 @@ class Mongo(BaseDatabase):
 
         self.db = self.client[cfg.db]
         self.collects = Collections(
-            users=self.db[cfg.collections.users],
+            players=self.db[cfg.collections.players],
             admins=self.db[cfg.collections.admins],
         )
-
-        # await self.collects.admins.createIndex({'email': 1}, {'unique': 'true'})
 
     async def disconnect(self, app: "Application") -> None:
         pass
