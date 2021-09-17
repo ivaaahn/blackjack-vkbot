@@ -29,3 +29,4 @@ webargs==5.5.3
 yarl==1.6.3
 aioredis~=2.0.0
 motor~=2.5.1
+pymongo~=3.12.0
