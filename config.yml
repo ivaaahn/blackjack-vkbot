@@ -13,7 +13,7 @@ mongo:
   password: BlackjackBotPwd
   uuidRepresentation: standard
   collections:
-    users: users
+    players: players
     admins: admins
 redis:
   host: localhost

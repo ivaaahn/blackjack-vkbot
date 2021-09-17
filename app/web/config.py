@@ -35,7 +35,7 @@ class RedisConfig:
 
 @dataclass
 class MongoCollections:
-    users: str
+    players: str
     admins: str
 
 
@@ -84,7 +84,7 @@ def setup_config(app: "Application", config_path: str):
             password=raw_config['mongo']['password'],
             uuidRepresentation=raw_config['mongo']['uuidRepresentation'],
             collections=MongoCollections(
-                users=raw_config['mongo']['collections']['users'],
+                players=raw_config['mongo']['collections']['players'],
                 admins=raw_config['mongo']['collections']['admins'],
             ),
         ),
