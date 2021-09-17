@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Union, Optional
 from app.game.states import State
 
 if TYPE_CHECKING:
-    from app.web.app import Application
+    from app.app import Application
 
 STATE_PREFIX = 'STATE_'
 DATA_PREFIX = 'DATA_'

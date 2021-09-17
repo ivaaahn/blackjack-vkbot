@@ -4,7 +4,7 @@ from dataclasses import dataclass
 import yaml
 
 if typing.TYPE_CHECKING:
-    from app.web.app import Application
+    from .app import Application
 
 
 @dataclass
@@ -56,7 +56,6 @@ class Config:
     session: SessionConfig
     bot: BotConfig
     mongo: MongoConfig
-    # database: DatabaseConfig
     redis: RedisConfig
 
 

@@ -139,7 +139,7 @@ class BlackJackGame(Game):
         self._num_of_decks = d['num_of_decks']
         self._planned_num_of_players = d['planned_num_of_players']
         self._deck = Deck(d=d['deck'])
-        self._players = [Player(d=player_info) for player_info in d['players']]
+        self._players = [Player(d=player_info) for player_info in d['player']]
         self._min_bet = d['min_bet']
         self._max_bet = d['max_bet']
         self._current_player_idx = d['current_player_idx']
@@ -151,7 +151,7 @@ class BlackJackGame(Game):
             'num_of_decks': self._num_of_decks,
             'planned_num_of_players': self._planned_num_of_players,
             'deck': self._deck.to_dict(),
-            'players': [p.to_dict() for p in self._players],
+            'player': [p.to_dict() for p in self._players],
             'min_bet': self._min_bet,
             'max_bet': self._max_bet,
             'current_player_idx': self._current_player_idx,

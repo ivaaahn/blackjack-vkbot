@@ -8,14 +8,14 @@ from aiohttp.web import (
 from aiohttp_apispec import setup_aiohttp_apispec
 from aiohttp_session.cookie_storage import EncryptedCookieStorage
 
-from app.admin.models import AdminModel
+from app.api.admin.models import AdminModel
 from app.database.mongo import Mongo, setup_mongo
 from app.database.redis import Redis, setup_redis
 from app.store import setup_store, Store
-from app.web.config import Config, setup_config
-from app.web.logger import setup_logging
-from app.web.middlewares import setup_middlewares
-from app.web.routes import setup_routes
+from .config import Config, setup_config
+from .logger import setup_logging
+from .api.app.middlewares import setup_middlewares
+from .api.app.routes import setup_routes
 from aiohttp_session import setup as setup_aiohttp_session
 from app.bot.manager import setup as setup_bot_manager, BotManager
 

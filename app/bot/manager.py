@@ -7,7 +7,7 @@ from app.game.dataclasses import GAccessors
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from app.web.app import Application
+    from app.app import Application
     from app.store.vk_api.accessor import VkApiAccessor
 
 

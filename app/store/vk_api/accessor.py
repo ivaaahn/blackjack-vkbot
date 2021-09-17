@@ -11,8 +11,8 @@ from app.store.vk_api.dataclasses import Message, Update, UpdateObject, UpdateMe
 from app.store.vk_api.poller import Poller
 
 if typing.TYPE_CHECKING:
-    from app.web.app import Application
-    from app.web.config import BotConfig
+    from app.app import Application
+    from app.config import BotConfig
 
 
 class VkApiAccessor(BaseAccessor):

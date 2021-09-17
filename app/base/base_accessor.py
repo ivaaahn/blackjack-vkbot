@@ -3,7 +3,7 @@ from abc import ABCMeta, abstractmethod
 from logging import getLogger
 
 if typing.TYPE_CHECKING:
-    from app.web.app import Application
+    from app.app import Application
 
 
 class BaseAccessor(metaclass=ABCMeta):

@@ -1,13 +1,12 @@
 from dataclasses import dataclass
 from typing import Optional, TYPE_CHECKING
 
-from aioredis import from_url, client
-
-from app.base.base_database import BaseDatabase
 from motor.motor_asyncio import AsyncIOMotorClient
 
+from app.base.base_database import BaseDatabase
+
 if TYPE_CHECKING:
-    from app.web.app import Application
+    from app.app import Application
     from motor.motor_asyncio import (AsyncIOMotorDatabase,
                                      AsyncIOMotorCollection)
 

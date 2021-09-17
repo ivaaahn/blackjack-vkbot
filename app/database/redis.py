@@ -5,7 +5,7 @@ from aioredis import from_url, client
 from app.base.base_database import BaseDatabase
 
 if TYPE_CHECKING:
-    from app.web.app import Application
+    from app.app import Application
 
 
 class Redis(BaseDatabase):

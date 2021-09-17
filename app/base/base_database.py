@@ -3,7 +3,7 @@ from abc import ABCMeta, abstractmethod
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from app.web.app import Application
+    from app.app import Application
 
 
 class BaseDatabase(metaclass=ABCMeta):

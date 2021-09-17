@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING
 
 from app.game.deck import Card
 from app.game.game import GameCtxProxy, BlackJackGame
-from app.game.models import PlayerModel
+from app.api.player.models import PlayerModel
 from app.game.player import Player
 from app.game.states import BJStates
 from app.game.utils import parse_bet_expr, get_payload

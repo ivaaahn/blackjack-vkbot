@@ -6,11 +6,11 @@ from aiohttp.web_middlewares import middleware
 from aiohttp_apispec import validation_middleware
 from aiohttp_session import get_session
 
-from app.admin.utils import admin_from_session
-from app.web.utils import error_json_response
+from app.api.admin.utils import admin_from_session
+from .utils import error_json_response
 
 if typing.TYPE_CHECKING:
-    from app.web.app import Application, Request
+    from app.app import Application, Request
 
 HTTP_ERROR_CODES = {
     400: "bad_request",

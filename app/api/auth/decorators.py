@@ -2,7 +2,7 @@ from functools import wraps
 
 from aiohttp.web_exceptions import HTTPUnauthorized
 
-from app.web.app import View
+from app.app import View
 
 
 def auth_required(wrapped_func):

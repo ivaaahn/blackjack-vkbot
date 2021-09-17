@@ -2,11 +2,11 @@ from aiohttp.web_exceptions import HTTPForbidden
 from aiohttp_apispec import docs, request_schema, response_schema
 from aiohttp_session import new_session
 
-from app.admin.schemes import AdminResponseSchema, AdminAuthRequestSchema
-from app.admin.utils import is_password_valid
-from app.auth.decorators import auth_required
-from app.web.app import View
-from app.web.utils import json_response
+from .schemes import AdminResponseSchema, AdminAuthRequestSchema
+from .utils import is_password_valid
+from app.api.auth.decorators import auth_required
+from app.app import View
+from app.api.app.utils import json_response
 
 
 class AdminLoginView(View):

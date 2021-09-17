@@ -4,12 +4,12 @@ from uuid import uuid4
 
 from pymongo.errors import DuplicateKeyError
 
-from app.admin.models import AdminModel
+from app.api.admin.models import AdminModel
 from app.base.base_accessor import BaseAccessor
-from app.admin.utils import hash_pwd
+from app.api.admin.utils import hash_pwd
 
 if typing.TYPE_CHECKING:
-    from app.web.app import Application
+    from app.app import Application
     from motor.motor_asyncio import AsyncIOMotorCollection
 
 

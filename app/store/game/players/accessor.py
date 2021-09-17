@@ -6,10 +6,10 @@ from uuid import uuid4
 from pymongo.errors import DuplicateKeyError
 
 from app.base.base_accessor import BaseAccessor
-from app.game.models import PlayerModel
+from app.api.player.models import PlayerModel
 
 if typing.TYPE_CHECKING:
-    from app.web.app import Application
+    from app.app import Application
     from motor.motor_asyncio import AsyncIOMotorCollection
 
 
