@@ -5,8 +5,7 @@ from typing import Optional, Callable, TYPE_CHECKING
 from app.game.keyboards import TextButton, Keyboard, ButtonColor
 
 if TYPE_CHECKING:
-    from app.store.vk_api.accessor import VkApiAccessor
-    from app.store.vk_api.dataclasses import UpdateMessage
+    from app.game.dataclasses import GAccessors
     from app.game.game import GameCtxProxy
 
 
@@ -36,7 +35,7 @@ class State:
         return self._id
 
     @property
-    def handler(self) -> Callable[['VkApiAccessor', 'GameCtxProxy', 'UpdateMessage'], None]:
+    def handler(self) -> Callable[['GameCtxProxy', 'GAccessors'], None]:
         return self._handler
 
     @handler.setter
@@ -107,5 +106,15 @@ class BJStates:
                 [
                     TextButton(label='Еще', color=ButtonColor.POSITIVE, payload='{"button": "hit"}'),
                     TextButton(label='Хватит', color=ButtonColor.NEGATIVE, payload='{"button": "stand"}'),
+                ],
+            ]))
+
+    WAITING_FOR_ANSWER_TO_REPEAT_QUESTION = State(
+        keyboard=Keyboard(
+            one_time=False,
+            buttons=[
+                [
+                    TextButton(label='Играем еще', color=ButtonColor.POSITIVE, payload='{"button": "play"}'),
+                    TextButton(label='Больше не играем', color=ButtonColor.NEGATIVE, payload='{"button": "stop"}'),
                 ],
             ]))

@@ -7,6 +7,7 @@ from app.base.base_game_accessor import BaseGameAccessor
 from app.game.deck import Deck, Card
 from app.game.player import Player
 from app.game.states import BJStates, State, StateResolver
+from app.store.vk_api.dataclasses import UpdateMessage
 
 
 class GameResult(str, Enum):
@@ -28,7 +29,7 @@ class BlackJackGame(Game):
         if raw is not None:
             self.from_dict(raw)
             return
-
+        self._num_of_decks = num_of_decks
         self._planned_num_of_players = num_of_players
         self._deck = Deck(num_of_decks)
         self._players: list[Player] = []
@@ -38,20 +39,32 @@ class BlackJackGame(Game):
         self._dealer = Player('Дилер', -1)
         self._chat_id: int = chat_id
 
+    def reset(self) -> None:
+        for player in self.players_and_dealer:
+            player.reset()
+
+        self._deck = Deck(self._num_of_decks)
+        self._current_player_idx = 0
+
     @property
     def ratio_of_registered(self) -> str:
         registered, planned = len(self.players), self._planned_num_of_players
         return f'{registered}/{planned}'
 
     def define_result(self, player: Player) -> GameResult:
-        if player.in_game is False:
+        if not player.in_game:
             return GameResult.DEFEAT
 
-        if (player.score > self.dealer.score) or (not self.dealer.in_game):
+        if not self.dealer.in_game:
             return GameResult.WIN
 
-        if self.dealer.score == player.score:
+        if player.score > self.dealer.score:
+            return GameResult.WIN
+
+        if player.score == self.dealer.score:
             return GameResult.DRAW
+
+        return GameResult.DEFEAT
 
     @property
     def dealer(self) -> Player:
@@ -123,6 +136,7 @@ class BlackJackGame(Game):
         return [p for p in self._players if p.bet is not None]
 
     def from_dict(self, d: dict) -> None:
+        self._num_of_decks = d['num_of_decks']
         self._planned_num_of_players = d['planned_num_of_players']
         self._deck = Deck(d=d['deck'])
         self._players = [Player(d=player_info) for player_info in d['players']]
@@ -134,6 +148,7 @@ class BlackJackGame(Game):
 
     def to_dict(self) -> dict:
         return {
+            'num_of_decks': self._num_of_decks,
             'planned_num_of_players': self._planned_num_of_players,
             'deck': self._deck.to_dict(),
             'players': [p.to_dict() for p in self._players],
@@ -146,9 +161,10 @@ class BlackJackGame(Game):
 
 
 class GameCtx:
-    def __init__(self, game_accessor: BaseGameAccessor, chat: int) -> None:
+    def __init__(self, game_accessor: BaseGameAccessor, chat: int, msg: UpdateMessage) -> None:
         self.accessor = game_accessor
         self.chat = chat
+        self.msg = msg
 
     def proxy(self) -> 'GameCtxProxy':
         return GameCtxProxy(self)
@@ -232,6 +248,10 @@ class GameCtxProxy:
         self._last_state = self.state
         self._state_is_dirty = True
         self._state = value
+
+    @property
+    def msg(self) -> UpdateMessage:
+        return self.game_ctx.msg
 
     @property
     def last_state(self) -> State:

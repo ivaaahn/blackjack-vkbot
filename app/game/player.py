@@ -27,6 +27,11 @@ class Player:
             'score': self.score,
         }
 
+    def reset(self) -> None:
+        self._bet = None
+        self._score = 0
+        self._cards.clear()
+
     @property
     def in_game(self) -> bool:
         return self.score <= 21
