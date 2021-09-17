@@ -1,5 +1,4 @@
-import json
-
+from app.game.deck import Card
 from app.game.game import GameCtxProxy, BlackJackGame
 from app.game.player import Player
 from app.game.states import BJStates
@@ -13,7 +12,8 @@ START_MSG = '/go'
 async def trigger_received(vk_api, ctx: GameCtxProxy, msg: UpdateMessage) -> None:
     if START_MSG in msg.text:
         answer = 'Сыграем?'
-        await vk_api.send_message(Message(peer_id=msg.peer_id, text=answer, kbd=ctx.state.keyboard))
+        await vk_api.send_message(
+            Message(peer_id=msg.peer_id, text=answer, kbd=ctx.state.keyboard, photos=Card.joker_photo))
         ctx.state = BJStates.WAITING_FOR_NEW_GAME
 
 
@@ -34,7 +34,12 @@ async def new_game_clicked(vk_api, ctx: GameCtxProxy, msg: UpdateMessage) -> Non
 
 async def do_cancel(vk_api, ctx: GameCtxProxy, msg: UpdateMessage) -> None:
     await hide_keyboard(vk_api, ctx, msg, 'Отмена игры')
+    await do_end(vk_api, ctx, msg)
+
+
+async def do_end(vk_api, ctx: GameCtxProxy, msg: UpdateMessage) -> None:
     del ctx.state
+    del ctx.game
 
 
 def check_back(payload: str) -> bool:
@@ -126,7 +131,6 @@ async def hand_out_cards(vk_api, ctx: GameCtxProxy, msg: UpdateMessage):
     ctx.game.deal_cards()
 
     for player in ctx.game.players_and_dealer:
-        # answer = f'{player}, %0a{player.cards}%0aСумма: {player.score}'
         answer = f'{player}, Сумма очков: {player.score}'
         await vk_api.send_message(Message(peer_id=msg.peer_id, text=answer, photos=player.cards_photos))
 
@@ -158,8 +162,6 @@ async def handle_hit_action(vk_api, ctx: GameCtxProxy, msg: UpdateMessage, playe
     card = ctx.game.deck.get_card()
     player.add_card(card)
 
-    # answer = f'{player},%0aНовая карта: {card}%0a%0aВсе карты: {player.cards}%0aСумма очков: {player.score}'
-
     answer = f'{player}, твои карты:'
     await vk_api.send_message(Message(peer_id=msg.peer_id, text=answer, photos=player.cards_photos))
 
@@ -180,7 +182,6 @@ async def handle_next_player(vk_api, ctx: GameCtxProxy, msg: UpdateMessage):
 
 
 async def show_results(vk_api, ctx: GameCtxProxy, msg: UpdateMessage):
-    # answer = f'Дилер, %0a{ctx.game.dealer.cards}%0aСумма очков: {ctx.game.dealer.score}'
     dealer = ctx.game.dealer
     answer = f'Дилер, Сумма очков: {dealer.score}'
     await vk_api.send_message(Message(peer_id=msg.peer_id, text=answer, photos=dealer.cards_photos))
@@ -189,4 +190,4 @@ async def show_results(vk_api, ctx: GameCtxProxy, msg: UpdateMessage):
         answer = f'{player}, {ctx.game.define_result(player).value}'
         await vk_api.send_message(Message(peer_id=msg.peer_id, text=answer))
 
-    del ctx.state
+    await do_end(vk_api, ctx, msg)

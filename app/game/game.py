@@ -162,13 +162,16 @@ class GameCtx:
         return default if raw_game is None else BlackJackGame(raw=raw_game)
 
     async def set_state(self, state: State) -> None:
-        if state is not None:
-            await self.accessor.set_state(chat=self.chat, state=state.state_id)
-        else:
+        if state is None:
             await self.reset_state()
+        else:
+            await self.accessor.set_state(chat=self.chat, state=state.state_id)
 
-    async def save_game(self, game: BlackJackGame) -> None:
-        await self.accessor.set_data(chat=self.chat, data=game.to_dict())
+    async def save_game(self, game: Optional[BlackJackGame]) -> None:
+        if game is None:
+            await self.reset_game()
+        else:
+            await self.accessor.set_data(chat=self.chat, data=game.to_dict())
 
     async def reset_game(self) -> None:
         await self.accessor.reset_data(chat=self.chat)
@@ -196,7 +199,7 @@ class GameCtxProxy:
         if exc_type is None:
             await self.save()
 
-        print(exc_type, exc_val, exc_tb)
+        # TODO: raise exception
 
         self._closed = True
 
@@ -208,11 +211,11 @@ class GameCtxProxy:
 
     async def save(self, force: bool = False) -> None:
         # TODO check usage of game
-        if self.game is not None:
-            await self.game_ctx.save_game(game=self._game)
+        # if self.game is not None:
+        await self.game_ctx.save_game(game=self._game)
 
         if self._state_is_dirty or force:
-            await self.game_ctx.set_state(state=self.state)
+            await self.game_ctx.set_state(state=self._state)
 
         self._state_is_dirty = False
 

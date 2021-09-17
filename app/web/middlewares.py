@@ -1,8 +1,7 @@
 import json
 import typing
 
-import aiohttp_session
-from aiohttp.web_exceptions import HTTPUnprocessableEntity, HTTPForbidden, HTTPClientError
+from aiohttp.web_exceptions import HTTPUnprocessableEntity, HTTPClientError
 from aiohttp.web_middlewares import middleware
 from aiohttp_apispec import validation_middleware
 from aiohttp_session import get_session

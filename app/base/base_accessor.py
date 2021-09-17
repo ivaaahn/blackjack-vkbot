@@ -14,9 +14,9 @@ class BaseAccessor(metaclass=ABCMeta):
         app.on_cleanup.append(self.disconnect)
 
     @abstractmethod
-    async def connect(self, app: "Application"):
+    async def connect(self, app: "Application") -> None:
         pass
 
     @abstractmethod
-    async def disconnect(self, app: "Application"):
+    async def disconnect(self, app: "Application") -> None:
         pass

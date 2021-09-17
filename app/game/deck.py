@@ -4,12 +4,13 @@ from typing import Optional
 
 class Card:
     sharp_photo = 'photo-202369435_457239076'
+    joker_photo = 'photo-202369435_457239075'
 
     def __init__(self, rank: Optional[int] = None, suit: Optional[int] = None, d: Optional[dict] = None) -> None:
-        # self._suits = {'c': '♣', 'd': '♦', 'h': '♥', 's': '♠'}
-        self._ranks = ['2', '3', '4', '5', '6', '7', '8', '9', 't', '10', 'j', 'k', 'q']
-        self._suits = ['c', 'd', 'h', 's']
-        self._photos: dict[str, str] = {k: str(v) for k, v in zip([r+s for r in self._ranks for s in self._suits], range(457239077, 457239129))}
+        self._ranks = ('2', '3', '4', '5', '6', '7', '8', '9', 't', '10', 'j', 'k', 'q')
+        self._suits = ('c', 'd', 'h', 's')
+        self._photos: dict[str, str] = {k: str(v) for k, v in zip([r + s for r in self._ranks for s in self._suits],
+                                                                  range(457239077, 457239129))}
 
         if d is None:
             self._rank = self._ranks[rank]
@@ -26,7 +27,7 @@ class Card:
 
     @property
     def photo(self) -> str:
-        return 'photo-202369435_'+self._photos[self.rank+self.suit]
+        return 'photo-202369435_' + self._photos[self.rank + self.suit]
 
     @property
     def rank(self) -> str:

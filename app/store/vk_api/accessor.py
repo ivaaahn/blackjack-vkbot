@@ -1,3 +1,4 @@
+import random
 import typing
 from pprint import pprint
 from typing import Optional
@@ -77,7 +78,6 @@ class VkApiAccessor(BaseAccessor):
             resp_json: dict = await response.json()
             self.ts = resp_json['ts']
             raw_updates = resp_json['updates']
-            pprint(resp_json)
 
         return self._pack_updates(raw_updates)
 
@@ -85,11 +85,10 @@ class VkApiAccessor(BaseAccessor):
         query_params = {
             'message': message.text,
             'access_token': self.app.config.bot.token,
-            'random_id': 0,
+            'random_id': random.randint(-2147483648, 2147483648),
             'peer_id': message.peer_id,
-            'keyboard': message.kbd.to_json(),
+            'keyboard': message.kbd.serialize(),
             'attachment': message.photos,
-            # 'user_id': message.user_id,
         }
 
         query = self._build_query(

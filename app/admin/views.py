@@ -1,12 +1,11 @@
-from aiohttp.web_exceptions import HTTPUnauthorized, HTTPNotFound, HTTPForbidden
+from aiohttp.web_exceptions import HTTPForbidden
 from aiohttp_apispec import docs, request_schema, response_schema
-from aiohttp_session import new_session, get_session
+from aiohttp_session import new_session
 
 from app.admin.schemes import AdminResponseSchema, AdminAuthRequestSchema
 from app.admin.utils import is_password_valid
 from app.auth.decorators import auth_required
 from app.web.app import View
-from app.web.middlewares import HTTP_ERROR_CODES
 from app.web.utils import json_response
 
 
@@ -25,7 +24,7 @@ class AdminLoginView(View):
         response_data = AdminResponseSchema().dump(admin_db)
 
         session = await new_session(request=self.request)
-        session['user_data'] = response_data
+        session['admin'] = response_data
 
         return json_response(data=response_data)
 
@@ -35,4 +34,5 @@ class AdminCurrentView(View):
     @docs(tags=["admin"], summary="Get info about current user", description="Get info about current user")
     @response_schema(AdminResponseSchema, 200)
     async def get(self):
-        return json_response(data=AdminResponseSchema().dump(self.request.admin))
+        data = AdminResponseSchema().dump(self.request.admin)
+        return json_response(data=data)

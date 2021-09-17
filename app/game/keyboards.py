@@ -60,5 +60,5 @@ class Keyboard:
             'buttons': [[btn.to_dict() for btn in btn_line] for btn_line in self._buttons]
         }
 
-    def to_json(self) -> str:
+    def serialize(self) -> str:
         return json.dumps(self.to_dict())

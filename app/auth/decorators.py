@@ -1,7 +1,6 @@
 from functools import wraps
 
-from aiohttp.web_exceptions import HTTPForbidden, HTTPUnauthorized
-from aiohttp_session import get_session
+from aiohttp.web_exceptions import HTTPUnauthorized
 
 from app.web.app import View
 

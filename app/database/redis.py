@@ -14,8 +14,6 @@ class Redis(BaseDatabase):
         self.client: Optional[client.Redis] = None
 
     async def connect(self, app: "Application") -> None:
-        print("Redis.connect()")
-
         cfg = app.config.redis
 
         self.client = from_url(
@@ -28,8 +26,6 @@ class Redis(BaseDatabase):
         )
 
     async def disconnect(self, app: "Application") -> None:
-        print("Redis.disconnect()")
-
         await self.client.close()
 
 
