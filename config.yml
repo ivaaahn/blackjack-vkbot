@@ -5,12 +5,16 @@ session:
 admin:
   email: admin@admin.com
   password: admin
-database:
+mongo:
   host: localhost
-  port: 5432
-  user: bjbot
-  password: bjbot
-  database: bjbot_db
+  port: 27017
+  db: BlackjackBotDatabase
+  user: BlackjackBot
+  password: BlackjackBotPwd
+  uuidRepresentation: standard
+  collections:
+    users: users
+    admins: admins
 redis:
   host: localhost
   port: 6379

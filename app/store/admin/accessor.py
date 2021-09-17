@@ -1,48 +1,51 @@
-import base64
 import typing
-from hashlib import sha256
 from typing import Optional
+from uuid import uuid4
 
-import bcrypt
-from asyncpg import UniqueViolationError
+from pymongo.errors import DuplicateKeyError
 
-from app.base.base_accessor import BaseAccessor
 from app.admin.models import AdminModel
-from app.admin.dataclasses import Admin
+from app.base.base_accessor import BaseAccessor
+from app.admin.utils import hash_pwd
 
 if typing.TYPE_CHECKING:
     from app.web.app import Application
+    from motor.motor_asyncio import AsyncIOMotorCollection
 
 
 class AdminAccessor(BaseAccessor):
-    async def connect(self, app: "Application"):
-        cfg = app.config.admin
+    def __init__(self, app: "Application") -> None:
+        super().__init__(app)
 
+    @property
+    def collect(self) -> "AsyncIOMotorCollection":
+        return self.app.mongo.collects.admins
+
+    @property
+    def cfg(self):
+        return self.app.config.admin
+
+    async def connect(self, app: "Application"):
         await self.create_admin(
-            email=cfg.email,
-            password=cfg.password
+            email=self.cfg.email,
+            password=self.cfg.password
         )
 
     async def disconnect(self, app: "Application"):
         pass
 
-    async def get_by_email(self, email: str) -> Optional[Admin]:
-        admin_model: Optional[AdminModel] = await AdminModel.query.where(AdminModel.email == email).gino.first()
-        if admin_model is not None:
-            return Admin(id=admin_model.id, email=admin_model.email, password=admin_model.password)
+    async def get_by_email(self, email: str) -> Optional[AdminModel]:
+        raw_admin = await self.collect.find_one({'email': email})
+
+        if raw_admin is not None:
+            return AdminModel.from_dict(raw_admin)
 
         return None
 
-    async def create_admin(self, email: str, password: str) -> Optional[Admin]:
+    async def create_admin(self, email: str, password: str):
+        model = AdminModel(_id=uuid4(), email=email, password=hash_pwd(password))
+
         try:
-            admin = await AdminModel.create(email=email, password=self._password_hasher(password))
-        except UniqueViolationError:
-            return None
-
-        return admin
-
-    @staticmethod
-    def _password_hasher(raw_password: str) -> str:
-        hash_binary = bcrypt.hashpw(raw_password.encode('utf-8'), bcrypt.gensalt())
-        encoded = base64.b64encode(hash_binary)
-        return encoded.decode('utf-8')
+            await self.collect.insert_one(model.to_dict())
+        except DuplicateKeyError:
+            pass

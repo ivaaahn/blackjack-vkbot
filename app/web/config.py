@@ -25,15 +25,6 @@ class BotConfig:
 
 
 @dataclass
-class DatabaseConfig:
-    host: str
-    port: int
-    user: str
-    password: str
-    database: str
-
-
-@dataclass
 class RedisConfig:
     host: str = "localhost"
     port: int = 6379
@@ -43,11 +34,29 @@ class RedisConfig:
 
 
 @dataclass
+class MongoCollections:
+    users: str
+    admins: str
+
+
+@dataclass
+class MongoConfig:
+    host: str
+    port: int
+    db: str
+    user: str
+    password: str
+    uuidRepresentation: str
+    collections: MongoCollections
+
+
+@dataclass
 class Config:
     admin: AdminConfig
     session: SessionConfig
     bot: BotConfig
-    database: DatabaseConfig
+    mongo: MongoConfig
+    # database: DatabaseConfig
     redis: RedisConfig
 
 
@@ -67,6 +76,17 @@ def setup_config(app: "Application", config_path: str):
             token=raw_config['bot']['token'],
             group_id=raw_config['bot']['group_id']
         ),
-        database=DatabaseConfig(**raw_config['database']),
+        mongo=MongoConfig(
+            host=raw_config['mongo']['host'],
+            port=raw_config['mongo']['port'],
+            db=raw_config['mongo']['db'],
+            user=raw_config['mongo']['user'],
+            password=raw_config['mongo']['password'],
+            uuidRepresentation=raw_config['mongo']['uuidRepresentation'],
+            collections=MongoCollections(
+                users=raw_config['mongo']['collections']['users'],
+                admins=raw_config['mongo']['collections']['admins'],
+            ),
+        ),
         redis=RedisConfig(**raw_config['redis']),
     )
