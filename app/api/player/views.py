@@ -1,5 +1,8 @@
-
-
+# from aiohttp_apispec import docs, request_schema, response_schema
+#
+# from app.app import View
+#
+#
 # class AdminLoginView(View):
 #     @docs(tags=["admin"], summary="Get info about current user", description="Get info about current user")
 #     @request_schema(AdminAuthRequestSchema)
