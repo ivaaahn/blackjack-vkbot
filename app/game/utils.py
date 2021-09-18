@@ -11,16 +11,18 @@ class CheckType(Enum):
     IN = 1
 
 
+class Choice(str, Enum):
+    HIT = 'hit'
+    STAND = 'stand'
+
+
 def get_username_by_id(user_id: int, chat: dict) -> str:
     return [p['first_name'] for p in chat['response']['profiles'] if p['id'] == user_id][0]
 
 
 def parse_bet_expr(text: str) -> Optional[int]:
     numbers = [int(x) for x in re.findall(r'\d+', text)]
-    if numbers:
-        return numbers[0]
-
-    return None
+    return numbers[0] if numbers else None
 
 
 def get_payload(msg: UpdateMessage, key: str = 'button') -> Optional[str]:
