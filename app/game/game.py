@@ -6,8 +6,8 @@ from app.base.base_game import Game
 from app.base.base_game_accessor import BaseGameAccessor
 from app.game.deck import Deck, Card
 from app.game.player import Player
-from app.game.states import BJStates, State, StateResolver
-from app.store.vk_api.dataclasses import UpdateMessage
+from app.game.states import States, State, StateResolver
+from app.store.vk_api.dataclasses import UpdateMessage, Message
 
 
 class GameResult(str, Enum):
@@ -21,23 +21,42 @@ class BlackJackGame(Game):
                  chat_id: Optional[int] = None,
                  num_of_players: Optional[int] = None,
                  num_of_decks: int = 1,
-                 min_bet: int = 1,
-                 max_bet: int = 10000,
+                 min_bet: Optional[float] = None,
+                 max_bet: Optional[float] = None,
                  raw: Optional[dict] = None,
                  ) -> None:
 
         if raw is not None:
             self.from_dict(raw)
-            return
-        self._num_of_decks = num_of_decks
-        self._planned_num_of_players = num_of_players
-        self._deck = Deck(num_of_decks)
-        self._players: list[Player] = []
-        self._min_bet = min_bet
-        self._max_bet = max_bet
-        self._current_player_idx: Optional[int] = 0
-        self._dealer = Player('Дилер', -1)
-        self._chat_id: int = chat_id
+        else:
+            self._num_of_decks = num_of_decks
+            self._planned_num_of_players = num_of_players
+            self._deck = Deck(num_of_decks)
+            self._players: list[Player] = []
+            self._min_bet = min_bet
+            self._max_bet = max_bet
+            self._current_player_idx: Optional[int] = 0
+            self._dealer = Player('Дилер', -1)
+            self._chat_id: int = chat_id
+
+    def update_cash(self, player: Player):
+        res = self.define_result(player)
+        if res is GameResult.WIN:
+            player.cash += player.bet
+        elif res is GameResult.DEFEAT:
+            player.cash -= player.bet
+
+    @property
+    def min_max_bet_info(self) -> str:
+        return f' - Минимум: {self.min_bet}%0A - Максимум: {self.max_bet}%0A'
+
+    @property
+    def max_bet(self) -> float:
+        return self._max_bet
+
+    @property
+    def min_bet(self) -> float:
+        return self._min_bet
 
     def reset(self) -> None:
         for player in self.players_and_dealer:
@@ -139,11 +158,11 @@ class BlackJackGame(Game):
         self._num_of_decks = d['num_of_decks']
         self._planned_num_of_players = d['planned_num_of_players']
         self._deck = Deck(d=d['deck'])
-        self._players = [Player(d=player_info) for player_info in d['player']]
+        self._players = [Player(raw=player_info) for player_info in d['player']]
         self._min_bet = d['min_bet']
         self._max_bet = d['max_bet']
         self._current_player_idx = d['current_player_idx']
-        self._dealer = Player(d=d['dealer'])
+        self._dealer = Player(raw=d['dealer'])
         self._chat_id = d['chat_id']
 
     def to_dict(self) -> dict:
@@ -202,6 +221,7 @@ class GameCtxProxy:
         self._game: Optional[BlackJackGame] = None
         self._state: Optional[State] = None
         self._last_state: Optional[State] = None
+        self._last_answer: Optional[Message] = None
 
         self._state_is_dirty = False
 
@@ -218,6 +238,14 @@ class GameCtxProxy:
         # TODO: raise exception
 
         self._closed = True
+
+    @property
+    def last_ans(self) -> Message:
+        return self._last_answer
+
+    @last_ans.setter
+    def last_ans(self, value) -> None:
+        self._last_answer = value
 
     async def load(self) -> None:
         self._closed = False
