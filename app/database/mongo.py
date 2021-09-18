@@ -13,8 +13,9 @@ if TYPE_CHECKING:
 
 @dataclass
 class Collections:
-    players: Optional["AsyncIOMotorCollection"] = None
-    admins: Optional["AsyncIOMotorCollection"] = None
+    players: Optional['AsyncIOMotorCollection'] = None
+    admins: Optional['AsyncIOMotorCollection'] = None
+    game_settings: Optional['AsyncIOMotorCollection'] = None
 
 
 class Mongo(BaseDatabase):
@@ -39,6 +40,7 @@ class Mongo(BaseDatabase):
         self.collects = Collections(
             players=self.db[cfg.collections.players],
             admins=self.db[cfg.collections.admins],
+            game_settings=self.db[cfg.collections.game_settings]
         )
 
     async def disconnect(self, app: "Application") -> None:

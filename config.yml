@@ -15,6 +15,7 @@ mongo:
   collections:
     players: players
     admins: admins
+    game_settings: game_settings
 redis:
   host: localhost
   port: 6379
@@ -24,5 +25,13 @@ redis:
 bot:
   token: 71537a16b313e2356b4fc47241558c813f25c22468524fad590a288c24713410349ea3603e95395a13a5c
   group_id: 202369435
+game:
+  min_bet: 1
+  max_bet: 10000
+  start_cash: 1000
+  bonus: 1000
+  bonus_period: 5  # minutes
+  num_of_decks: 1
+
 
 

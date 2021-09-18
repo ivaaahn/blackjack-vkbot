@@ -37,6 +37,7 @@ class RedisConfig:
 class MongoCollections:
     players: str
     admins: str
+    game_settings: str
 
 
 @dataclass
@@ -51,12 +52,24 @@ class MongoConfig:
 
 
 @dataclass
+class GameConfig:
+    start_cash: float
+    bonus: float
+    bonus_period: int
+    min_bet: float
+    max_bet: float
+    num_of_decks: int
+
+
+
+@dataclass
 class Config:
     admin: AdminConfig
     session: SessionConfig
     bot: BotConfig
     mongo: MongoConfig
     redis: RedisConfig
+    game: GameConfig
 
 
 def setup_config(app: "Application", config_path: str):
@@ -85,7 +98,9 @@ def setup_config(app: "Application", config_path: str):
             collections=MongoCollections(
                 players=raw_config['mongo']['collections']['players'],
                 admins=raw_config['mongo']['collections']['admins'],
+                game_settings=raw_config['mongo']['collections']['game_settings']
             ),
         ),
         redis=RedisConfig(**raw_config['redis']),
+    game=GameConfig(**raw_config['game']),
     )
