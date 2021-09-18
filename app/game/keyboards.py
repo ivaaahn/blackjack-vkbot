@@ -62,3 +62,72 @@ class Keyboard:
 
     def serialize(self) -> str:
         return json.dumps(self.to_dict())
+
+
+class Keyboards:
+    EMPTY = Keyboard()
+
+    START = Keyboard(one_time=False, buttons=[
+        [
+            TextButton(label='Новая игра', color=ButtonColor.POSITIVE, payload='{"button": "new_game"}'),
+            TextButton(label='Получить бонус', color=ButtonColor.PRIMARY, payload='{"button": "bonus"}'),
+            TextButton(label='Проверить счёт', color=ButtonColor.SECONDARY, payload='{"button": "balance"}'),
+        ],
+        [
+            TextButton(label='Выход', color=ButtonColor.NEGATIVE, payload='{"button": "cancel"}'),
+        ],
+    ])
+
+    # LK = Keyboard(one_time=False, buttons=[
+    #     [
+    #         TextButton(label='Получить ежедневный бонус', color=ButtonColor.NEGATIVE, payload='{"button": "bonus"}'),
+    #     ],
+    #     [
+    #         TextButton(label='Назад', color=ButtonColor.NEGATIVE, payload='{"button": "back"}'),
+    #     ],
+    # ])
+
+    NUMBER_OF_PLAYERS = Keyboard(one_time=False, buttons=[
+        [
+            TextButton(label='Один игрок', color=ButtonColor.PRIMARY, payload='{"button": "1"}'),
+        ],
+        [
+            TextButton(label='Два игрока', color=ButtonColor.PRIMARY, payload='{"button": "2"}'),
+            TextButton(label='Три игрока', color=ButtonColor.PRIMARY, payload='{"button": "3"}'),
+        ],
+        [
+            TextButton(label='Отмена', color=ButtonColor.NEGATIVE, payload='{"button": "cancel"}'),
+            TextButton(label='Назад', color=ButtonColor.NEGATIVE, payload='{"button": "back"}'),
+        ],
+    ])
+
+    CONFIRM = Keyboard(
+        inline=True,
+        one_time=False,
+        buttons=[
+            [
+                TextButton(label='Я в игре!', color=ButtonColor.POSITIVE, payload='{"button": "register"}'),
+            ],
+            [
+                TextButton(label='Отменить игру', color=ButtonColor.NEGATIVE, payload='{"button": "cancel"}'),
+            ],
+        ])
+
+    CHOOSE_ACTION = Keyboard(
+        inline=True,
+        one_time=False,
+        buttons=[
+            [
+                TextButton(label='Еще', color=ButtonColor.POSITIVE, payload='{"button": "hit"}'),
+                TextButton(label='Хватит', color=ButtonColor.NEGATIVE, payload='{"button": "stand"}'),
+            ],
+        ])
+
+    REPEAT_GAME_QUESTION = Keyboard(
+        one_time=False,
+        buttons=[
+            [
+                TextButton(label='Играем еще', color=ButtonColor.POSITIVE, payload='{"button": "again"}'),
+                TextButton(label='Больше не играем', color=ButtonColor.NEGATIVE, payload='{"button": "stop"}'),
+            ],
+        ])
