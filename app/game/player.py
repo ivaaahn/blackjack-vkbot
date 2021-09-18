@@ -4,28 +4,47 @@ from app.game.deck import Card
 
 
 class Player:
-    def __init__(self, name: Optional[str] = None, vk_id: Optional[int] = None, d: Optional[dict] = None) -> None:
-        if d is None:
+    def __init__(self,
+                 name: Optional[str] = None,
+                 vk_id: Optional[int] = None,
+                 cash: Optional[float] = None,
+                 raw: Optional[dict] = None) -> None:
+
+        if raw is not None:
+            self.from_dict(raw)
+        else:
             self._name = name
             self._vk_id = vk_id
-            self._bet: Optional[int] = None
+            self._cash = cash
+            self._bet: Optional[float] = None
             self._cards: list[Card] = []
             self._score: int = 0
-        else:
-            self._name = d['name']
-            self._vk_id = d['vk_id']
-            self._bet = d['bet']
-            self._cards = [Card(d=card_info) for card_info in d['cards']]
-            self._score = d['score']
+
+    def from_dict(self, raw: dict) -> None:
+        self._name = raw['name']
+        self._vk_id = raw['vk_id']
+        self._cash = raw['cash']
+        self._bet = raw['bet']
+        self._cards = [Card(d=card_info) for card_info in raw['cards']]
+        self._score = raw['score']
 
     def to_dict(self) -> dict:
         return {
             'name': self.name,
             'vk_id': self.vk_id,
             'bet': self.bet,
+            'cash': self.cash,
             'cards': [c.to_dict() for c in self._cards],
             'score': self.score,
         }
+
+    @property
+    def cash(self) -> float:
+        return self._cash
+
+    @cash.setter
+    def cash(self, value: float) -> None:
+        self._cash = value
 
     def reset(self) -> None:
         self._bet = None
@@ -49,6 +68,7 @@ class Player:
 
         return res
 
+    # deprecated
     @property
     def cards(self) -> str:
         ans = ''
@@ -65,7 +85,7 @@ class Player:
         return self._score
 
     @property
-    def bet(self) -> Optional[int]:
+    def bet(self) -> Optional[float]:
         return self._bet
 
     @property
