@@ -5,16 +5,31 @@ from typing import Optional
 class Card:
     sharp_photo = 'photo-202369435_457239076'
     joker_photo = 'photo-202369435_457239075'
+    _SUIT_MAP = {
+        'c': '♣',
+        'd': '♦',
+        'h': '♥',
+        's': '♠'
+    }
+
+    _RANK_MAP = {
+        't': '10',
+        'j': 'Валет',
+        'k': 'Король',
+        'q': 'Дама',
+        'a': 'Туз'
+    }
+
+    _RANKS = '23456789tjkqa'
+    _SUITS = 'cdhs'
+
+    # _PHOTOS: dict[str, str] = {k: str(v) for k, v in zip([r + s for r in _RANKS for s in _SUITS],
+    #                                                      range(457239077, 457239129))}
 
     def __init__(self, rank: Optional[int] = None, suit: Optional[int] = None, d: Optional[dict] = None) -> None:
-        self._ranks = ('2', '3', '4', '5', '6', '7', '8', '9', 't', '10', 'j', 'k', 'q')
-        self._suits = ('c', 'd', 'h', 's')
-        self._photos: dict[str, str] = {k: str(v) for k, v in zip([r + s for r in self._ranks for s in self._suits],
-                                                                  range(457239077, 457239129))}
-
         if d is None:
-            self._rank = self._ranks[rank]
-            self._suit = self._suits[suit]
+            self._rank = self._RANKS[rank]
+            self._suit = self._SUITS[suit]
         else:
             self._rank = d['rank']
             self._suit = d['suit']
@@ -25,9 +40,19 @@ class Card:
             'suit': self._suit,
         }
 
+    # @property
+    # def photo(self) -> str:
+    #     return 'photo-202369435_' + self._PHOTOS[self.rank + self.suit]
+
+    @staticmethod
+    def fake_card() -> str:
+        return '🔻 ❓'
+
     @property
-    def photo(self) -> str:
-        return 'photo-202369435_' + self._photos[self.rank + self.suit]
+    def card_txt(self) -> str:
+        rank_info = self._RANK_MAP[self._rank] if self._rank.isalpha() else self._rank
+
+        return f'🔻 {rank_info} {self._SUIT_MAP[self._suit]}'
 
     @property
     def rank(self) -> str:
@@ -38,11 +63,11 @@ class Card:
         return self._suit
 
     def bj_value(self, curr_sum: int) -> int:
-        if self.rank in ('j', 'q', 'k', '10'):
+        if self.rank in 'jqkt':
             ans = 10
         elif self.rank in '23456789':
             ans = int(self.rank)
-        elif self.rank == 't':
+        elif self.rank == 'a':
             ans = 11 if curr_sum + 11 <= 21 else 1
         else:
             ans = -1
@@ -57,9 +82,9 @@ class Card:
 
 
 class Deck:
-    def __init__(self, number_of: int = 5, d: Optional[dict] = None) -> None:
+    def __init__(self, qty: int = 5, d: Optional[dict] = None) -> None:
         if d is None:
-            self._cards = [Card(rank=r, suit=s) for r in range(13) for s in range(4) for i in range(number_of)]
+            self._cards = [Card(rank=r, suit=s) for r in range(13) for s in range(4) for _ in range(qty)]
             self.shuffle()
             self._last_card: Optional[Card] = None
         else:
