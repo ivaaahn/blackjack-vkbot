@@ -11,7 +11,7 @@ class CheckType(Enum):
     IN = 1
 
 
-class Choice(str, Enum):
+class Choices(str, Enum):
     HIT = 'hit'
     STAND = 'stand'
 
