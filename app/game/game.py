@@ -1,26 +1,18 @@
-from dataclasses import dataclass
-from enum import Enum
-from typing import Optional, Iterator
+from typing import Optional
 
 from app.base.base_game import Game
 from app.base.base_game_accessor import BaseGameAccessor
-from app.game.deck import Deck, Card
-from app.game.player import Player
-from app.game.states import States, State, StateResolver
-from app.store.vk_api.dataclasses import UpdateMessage, Message
-
-
-class GameResult(str, Enum):
-    DEFEAT = 'Проигрыш'
-    DRAW = 'Ничья'
-    WIN = 'Победа'
+from app.game.deck import Deck
+from app.game.player import Player, PlayerStatus
+from app.game.states import State, StateResolver
+from app.store.vk_api.dataclasses import UpdateMessage
 
 
 class BlackJackGame(Game):
     def __init__(self,
                  chat_id: Optional[int] = None,
-                 num_of_players: Optional[int] = None,
-                 num_of_decks: int = 1,
+                 players_qty: Optional[int] = None,
+                 decks_qty: int = 1,
                  min_bet: Optional[float] = None,
                  max_bet: Optional[float] = None,
                  raw: Optional[dict] = None,
@@ -29,22 +21,21 @@ class BlackJackGame(Game):
         if raw is not None:
             self.from_dict(raw)
         else:
-            self._num_of_decks = num_of_decks
-            self._planned_num_of_players = num_of_players
-            self._deck = Deck(num_of_decks)
+            self._decks_qty = decks_qty
+            self._planned_players_qty = players_qty
+            self._deck = Deck(decks_qty)
             self._players: list[Player] = []
             self._min_bet = min_bet
             self._max_bet = max_bet
             self._current_player_idx: Optional[int] = 0
-            self._dealer = Player('Дилер', -1)
+            self._dealer = Player('Дилер')
             self._chat_id: int = chat_id
 
-    def update_cash(self, player: Player):
-        res = self.define_result(player)
-        if res is GameResult.WIN:
-            player.cash += player.bet
-        elif res is GameResult.DEFEAT:
+    def drop_player(self, player: Player):
+        if player.bet is not None:
             player.cash -= player.bet
+
+        self._players.pop(self._players.index(player))
 
     @property
     def min_max_bet_info(self) -> str:
@@ -62,28 +53,32 @@ class BlackJackGame(Game):
         for player in self.players_and_dealer:
             player.reset()
 
-        self._deck = Deck(self._num_of_decks)
+        # self._deck = Deck(self._num_of_decks)
         self._current_player_idx = 0
 
     @property
     def ratio_of_registered(self) -> str:
-        registered, planned = len(self.players), self._planned_num_of_players
+        registered, planned = len(self.players), self._planned_players_qty
         return f'{registered}/{planned}'
 
-    def define_result(self, player: Player) -> GameResult:
-        if not player.in_game:
-            return GameResult.DEFEAT
+    def define_results(self) -> None:
+        for p in self._players:
+            if p.status is not PlayerStatus.IN_GAME:
+                continue
 
-        if not self.dealer.in_game:
-            return GameResult.WIN
+            if not self.dealer.not_bust:
+                p.status = PlayerStatus.WIN
 
-        if player.score > self.dealer.score:
-            return GameResult.WIN
+            elif p.score > self.dealer.score:
+                p.status = PlayerStatus.WIN
 
-        if player.score == self.dealer.score:
-            return GameResult.DRAW
+            elif p.score == self.dealer.score:
+                p.status = PlayerStatus.DRAW
 
-        return GameResult.DEFEAT
+            else:
+                p.status = PlayerStatus.DEFEAT
+
+            p.update_cash()
 
     @property
     def dealer(self) -> Player:
@@ -95,7 +90,7 @@ class BlackJackGame(Game):
             dealer.add_card(self.deck.get_card())
 
     def deal_cards(self) -> None:
-        for player in self._players:
+        for player in self.players:
             player.add_card(self.deck.get_card())
             player.add_card(self.deck.get_card())
 
@@ -110,21 +105,31 @@ class BlackJackGame(Game):
         return self._players
 
     @property
+    def players_ids(self) -> list[int]:
+        return [p._vk_id for p in self._players]
+
+    @property
+    def players_cashes_info(self) -> str:
+        return '%0A'.join([f'{p} - {p.cash}' for p in self.players])
+
+    @property
     def table(self) -> int:
         return self._chat_id
 
     @property
     def current_player(self) -> Player:
-        return self._players[self._current_player_idx]
+        players = self.players
+        return players[self._current_player_idx]
 
     @property
     def deck(self) -> Deck:
         return self._deck
 
     def next_player(self) -> bool:
+        """:return: True если есть еще хотя бы один игрок"""
         self._current_player_idx += 1
 
-        if self._current_player_idx >= len(self._players):
+        if self._current_player_idx >= len(self.players):
             self._current_player_idx = None
             return False
 
@@ -132,11 +137,11 @@ class BlackJackGame(Game):
 
     @property
     def all_players_registered(self) -> bool:
-        return len(self._players) == self._planned_num_of_players
+        return len(self.players) == self._planned_players_qty
 
     @property
     def all_players_bet(self):
-        return len(self._players) == len(self.players_who_bet())
+        return len(self.players) == len(self.players_who_bet)
 
     def add_player(self, player: Player) -> bool:
         if player in self._players:
@@ -151,14 +156,15 @@ class BlackJackGame(Game):
                 return player
         return None
 
+    @property
     def players_who_bet(self) -> list[Player]:
         return [p for p in self._players if p.bet is not None]
 
     def from_dict(self, d: dict) -> None:
-        self._num_of_decks = d['num_of_decks']
-        self._planned_num_of_players = d['planned_num_of_players']
+        self._decks_qty = d['decks_qty']
+        self._planned_players_qty = d['planned_players_qty']
         self._deck = Deck(d=d['deck'])
-        self._players = [Player(raw=player_info) for player_info in d['player']]
+        self._players = [Player(raw=player_info) for player_info in d['players']]
         self._min_bet = d['min_bet']
         self._max_bet = d['max_bet']
         self._current_player_idx = d['current_player_idx']
@@ -167,10 +173,10 @@ class BlackJackGame(Game):
 
     def to_dict(self) -> dict:
         return {
-            'num_of_decks': self._num_of_decks,
-            'planned_num_of_players': self._planned_num_of_players,
+            'decks_qty': self._decks_qty,
+            'planned_players_qty': self._planned_players_qty,
             'deck': self._deck.to_dict(),
-            'player': [p.to_dict() for p in self._players],
+            'players': [p.to_dict() for p in self._players],
             'min_bet': self._min_bet,
             'max_bet': self._max_bet,
             'current_player_idx': self._current_player_idx,
@@ -221,7 +227,6 @@ class GameCtxProxy:
         self._game: Optional[BlackJackGame] = None
         self._state: Optional[State] = None
         self._last_state: Optional[State] = None
-        self._last_answer: Optional[Message] = None
 
         self._state_is_dirty = False
 
@@ -240,12 +245,8 @@ class GameCtxProxy:
         self._closed = True
 
     @property
-    def last_ans(self) -> Message:
-        return self._last_answer
-
-    @last_ans.setter
-    def last_ans(self, value) -> None:
-        self._last_answer = value
+    def chat_id(self) -> int:
+        return self.game_ctx.chat
 
     async def load(self) -> None:
         self._closed = False
@@ -301,9 +302,3 @@ class GameCtxProxy:
     @game.deleter
     def game(self) -> None:
         self._game = None
-
-    # @classmethod
-    # async def create(cls, game_ctx: GameCtx) -> 'GameCtxProxy':
-    #     proxy = cls(game_ctx)
-    #     await proxy.load()
-    #     return proxy
