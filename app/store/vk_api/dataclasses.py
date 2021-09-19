@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Optional
 from app.game.keyboards import Keyboard
-from datetime import date
+from datetime import date, datetime
 
 
 @dataclass
@@ -23,16 +23,16 @@ class User:
         )
 
     @staticmethod
-    def parse_vk_date(raw: Optional[str]) -> date:
+    def parse_vk_date(raw: Optional[str]) -> Optional[datetime]:
         if raw is None:
             return None
 
-        split = raw.split('.')
+        split = tuple(map(int, raw.split('.')))
 
         if len(split) == 2:
-            return date.fromisoformat(f'--{split[1]}-{split[0]}')
+            return datetime.fromisoformat(f'1900-{split[1]:02d}-{split[0]:02d}')
 
-        return date.fromisoformat(f'{split[2]}-{split[1]}-{split[0]}')
+        return datetime.fromisoformat(f'{split[2]}-{split[1]:02d}-{split[0]:02d}')
 
 
 @dataclass
