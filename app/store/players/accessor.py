@@ -1,12 +1,13 @@
 import typing
-from datetime import datetime, date
+from datetime import datetime
 from typing import Optional
-from uuid import uuid4
 
 from pymongo.errors import DuplicateKeyError
 
+from app.api.chats.models import ChatModel
+from app.api.players.models import PlayerModel
 from app.base.base_accessor import BaseAccessor
-from app.api.player.models import PlayerModel
+from app.store.players.pipelines import group_by_chat_pipeline, chat_pagination_pipeline, match_pipeline
 
 if typing.TYPE_CHECKING:
     from app.app import Application
@@ -19,7 +20,7 @@ class PlayersAccessor(BaseAccessor):
         super().__init__(app)
 
     @property
-    def collect(self) -> "AsyncIOMotorCollection":
+    def coll(self) -> "AsyncIOMotorCollection":
         return self.app.mongo.collects.players
 
     @property
@@ -32,51 +33,74 @@ class PlayersAccessor(BaseAccessor):
     async def disconnect(self, app: "Application") -> None:
         pass
 
-    async def get_by_vk_id(self, vk_id: int) -> Optional[PlayerModel]:
-        raw_player = await self.collect.find_one({'vk_id': vk_id})
-        if raw_player is not None:
-            return PlayerModel.from_dict(raw_player)
-        return None
+    async def get_chat_by_id(self, chat_id: int) -> Optional[ChatModel]:
+        pipeline = match_pipeline('chat_id', chat_id) + group_by_chat_pipeline()
+        result = await self.coll.aggregate(pipeline).to_list(None)
+        return ChatModel.from_dict(result[0]) if result else None
 
-    async def update_cash(self, vk_id: int, new_cash: float):
-        result = await self.collect.update_one({'vk_id': vk_id}, {'$set': {'cash': new_cash}})
-        print('updated %s document' % result.modified_count)
+    async def get_player_by_vk_id(self, chat_id: int, vk_id: int) -> Optional[PlayerModel]:
+        raw_player = await self.coll.find_one({'chat_id': chat_id, 'vk_id': vk_id})
+        return PlayerModel.from_dict(raw_player) if raw_player else None
 
-    async def give_bonus(self, vk_id: int, new_cash: float):
-        result = await self.collect.update_one(
-            {
-                'vk_id': vk_id,
-            },
+    async def get_chats_list(self,
+                             offset: int,
+                             limit: int,
+                             order_by: Optional[str],
+                             order_type: int) -> list[ChatModel]:
+
+        pipeline = group_by_chat_pipeline() + chat_pagination_pipeline(offset, limit, order_by, order_type)
+        result = await self.coll.aggregate(pipeline).to_list(None)
+        return [ChatModel.from_dict(chat_raw) for chat_raw in result]
+
+    async def get_players_list(self,
+                               chat_id: int,
+                               offset: int,
+                               limit: int,
+                               order_by: Optional[str],
+                               order_type: int) -> list[PlayerModel]:
+
+        cursor = self.coll.find({'chat_id': chat_id}).sort(order_by, order_type).skip(offset).limit(limit)
+        return [PlayerModel.from_dict(p_raw) for p_raw in await cursor.to_list(None)]
+
+    async def patch(self, chat_id: int, vk_id: int, data: dict) -> None:
+        await self.coll.update_one({'chat_id': chat_id, 'vk_id': vk_id}, {'$set': data})
+
+    async def update_cash(self, chat_id: int, vk_id: int, new_cash: float) -> None:
+        await self.patch(chat_id, vk_id, {'cash': new_cash})
+
+    async def give_bonus(self, chat_id: int, vk_id: int, new_cash: float) -> None:
+        await self.coll.update_one(
+            {'chat_id': chat_id, 'vk_id': vk_id},
             {
                 '$set': {
-                    'last_bonus_date': str(datetime.now()),
-                    'cash': new_cash,
+                    'last_bonus_date': datetime.now(),
+                    'cash': new_cash
                 }
             }
         )
-        print('updated %s document' % result.modified_count)
 
-    async def add(self,
-                  vk_id: int,
-                  first_name: str,
-                  last_name: str,
-                  birthday: Optional[date],
-                  start_cash: float,
-                  city: Optional[str]):
-
-        model = PlayerModel(
-            _id=uuid4(),
-            vk_id=vk_id,
-            first_name=first_name,
-            last_name=last_name,
-            birthday=birthday,
-            registered_at=datetime.now(),
-            city=city,
-            cash=start_cash,
-            last_bonus_date=datetime.now(),
-        )
+    async def add_player(self,
+                         chat_id: int,
+                         vk_id: int,
+                         first_name: str,
+                         last_name: str,
+                         birthday: Optional[datetime],
+                         start_cash: float,
+                         city: Optional[str],
+                         ) -> None:
 
         try:
-            await self.collect.insert_one(model.to_dict())
+            await self.coll.insert_one({
+                'vk_id': vk_id,
+                'chat_id': chat_id,
+                'first_name': first_name,
+                'last_name': last_name,
+                'registered_at': datetime.now(),
+                'last_bonus_date': datetime.now(),
+                'birthday': birthday,
+                'city': city,
+                'cash': start_cash,
+            })
+
         except DuplicateKeyError:
-            print('duplicate')
+            pass
