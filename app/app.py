@@ -7,6 +7,7 @@ from aiohttp.web import (
 )
 from aiohttp_apispec import setup_aiohttp_apispec
 from aiohttp_session.cookie_storage import EncryptedCookieStorage
+from multidict import MultiDictProxy
 
 from app.api.admin.models import AdminModel
 from app.database.mongo import Mongo, setup_mongo
@@ -47,7 +48,11 @@ class View(AiohttpView):
 
     @property
     def data(self) -> dict:
-        return self.request.get("data", {})
+        return self.request.get('data', {})
+
+    @property
+    def query_data(self) -> MultiDictProxy[str]:
+        return self.request.get('querystring', {})
 
 
 app = Application()
