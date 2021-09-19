@@ -69,12 +69,20 @@ class Keyboards:
 
     START = Keyboard(one_time=False, buttons=[
         [
-            TextButton(label='Новая игра', color=ButtonColor.POSITIVE, payload='{"button": "new_game"}'),
-            TextButton(label='Получить бонус', color=ButtonColor.PRIMARY, payload='{"button": "bonus"}'),
-            TextButton(label='Проверить счёт', color=ButtonColor.SECONDARY, payload='{"button": "balance"}'),
+            TextButton(label='Начать игру', color=ButtonColor.POSITIVE, payload='{"button": "new_game"}'),
+        ],
+        [
+            TextButton(label='Забрать бонус', color=ButtonColor.PRIMARY, payload='{"button": "bonus"}'),
+            TextButton(label='Проверить счёт', color=ButtonColor.PRIMARY, payload='{"button": "balance"}'),
         ],
         [
             TextButton(label='Выход', color=ButtonColor.NEGATIVE, payload='{"button": "cancel"}'),
+        ],
+    ])
+
+    GET_OUT = Keyboard(one_time=False, buttons=[
+        [
+            TextButton(label='Встать из-за стола', color=ButtonColor.NEGATIVE, payload='{"button": "get out"}'),
         ],
     ])
 
@@ -96,13 +104,13 @@ class Keyboards:
             TextButton(label='Три игрока', color=ButtonColor.PRIMARY, payload='{"button": "3"}'),
         ],
         [
-            TextButton(label='Отмена', color=ButtonColor.NEGATIVE, payload='{"button": "cancel"}'),
-            TextButton(label='Назад', color=ButtonColor.NEGATIVE, payload='{"button": "back"}'),
+            TextButton(label='Отменить игру', color=ButtonColor.NEGATIVE, payload='{"button": "cancel"}'),
+            # TextButton(label='Назад', color=ButtonColor.NEGATIVE, payload='{"button": "back"}'),
         ],
     ])
 
     CONFIRM = Keyboard(
-        inline=True,
+        inline=False,
         one_time=False,
         buttons=[
             [
@@ -114,11 +122,11 @@ class Keyboards:
         ])
 
     CHOOSE_ACTION = Keyboard(
-        inline=True,
+        # inline=True,
         one_time=False,
         buttons=[
             [
-                TextButton(label='Еще', color=ButtonColor.POSITIVE, payload='{"button": "hit"}'),
+                TextButton(label='Ещё', color=ButtonColor.POSITIVE, payload='{"button": "hit"}'),
                 TextButton(label='Хватит', color=ButtonColor.NEGATIVE, payload='{"button": "stand"}'),
             ],
         ])

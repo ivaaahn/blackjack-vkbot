@@ -1,7 +1,7 @@
 from app.game.deck import Card
 from app.game.logic import *
 from app.game.states import States
-from app.game.utils import get_payload, Choice
+from app.game.utils import get_payload, Choices
 
 if TYPE_CHECKING:
     from app.game.dataclasses import GAccessors
@@ -12,13 +12,13 @@ START_MSG = '/go'
 @States.WAITING_FOR_TRIGGER.register
 async def trigger_received(ctx: GameCtxProxy, access: 'GAccessors') -> None:
     if START_MSG in ctx.msg.text:
-        answer = 'Дарова!'
-        await send(ctx, access, answer, kbd=Kbds.START, photos=Card.joker_photo)
+        answer = 'Привет, меня зовут BlackjackBot!'
+        await send(ctx, access, answer, kbd=Kbds.START)
         ctx.state = States.WAITING_FOR_START_CHOICE
 
 
 @States.WAITING_FOR_START_CHOICE.register
-async def start_menu_clicked(ctx: GameCtxProxy, access: 'GAccessors') -> None:
+async def start_action_clicked(ctx: GameCtxProxy, access: 'GAccessors') -> None:
     if (payload := get_payload(ctx.msg)) is None:
         return
 
@@ -32,7 +32,7 @@ async def start_menu_clicked(ctx: GameCtxProxy, access: 'GAccessors') -> None:
     await choose[payload]()
 
 
-@States.WAITING_FOR_PLAYERS_COUNT.register
+@States.WAITING_FOR_PLAYERS_AMOUNT.register
 async def players_amount_clicked(ctx: GameCtxProxy, access: 'GAccessors') -> None:
     if (payload := get_payload(ctx.msg)) is None:
         return
@@ -50,10 +50,10 @@ async def players_amount_clicked(ctx: GameCtxProxy, access: 'GAccessors') -> Non
     answer = 'Отлично! Чтобы зарегистрироваться на игру, желающие должны нажать кнопку:'
     await send(ctx, access, answer, Kbds.CONFIRM)
 
-    ctx.state = States.WAITING_FOR_REGISTER
+    ctx.state = States.WAITING_FOR_REGISTRATION
 
 
-@States.WAITING_FOR_REGISTER.register
+@States.WAITING_FOR_REGISTRATION.register
 async def registration_clicked(ctx: GameCtxProxy, access: 'GAccessors') -> None:
     if (payload := get_payload(ctx.msg)) is None:
         return
@@ -65,7 +65,7 @@ async def registration_clicked(ctx: GameCtxProxy, access: 'GAccessors') -> None:
     if payload != 'register':
         return
 
-    await register_player(ctx, access)
+    await player_in_game(ctx, access)
 
     if ctx.game.all_players_registered:
         await complete_registration(ctx, access)
@@ -76,43 +76,57 @@ async def bet_received(ctx: GameCtxProxy, access: 'GAccessors') -> None:
     if (player := ctx.game.get_player_by_id(ctx.msg.from_id)) is None:
         return
 
-    await place_bet(ctx, access, player)
+    if get_payload(ctx.msg) == 'get out':
+        await send(ctx, access, f'{player}, вы покидаете игру')
+        ctx.game.drop_player(player)
+        if not ctx.game.players:
+            await do_cancel(ctx, access)
+            return
+    else:
+        await place_bet(ctx, access, player)
 
     if ctx.game.all_players_bet:
-        await complete_betting(ctx, access)
+        # await complete_betting(ctx, access)
+        await hand_out_cards(ctx, access)
+        await ask_player(ctx, access)
+        ctx.state = States.WAITING_FOR_ACTION
 
 
 @States.WAITING_FOR_ACTION.register
 async def action_clicked(ctx: GameCtxProxy, access: 'GAccessors'):
     player = ctx.game.current_player
-    choose = {
-        'hit': lambda: handle_hit_action(ctx, access, player),
-        'stand': lambda: handle_next_player(ctx, access),
-    }
 
     if ctx.msg.from_id != player.vk_id:
         return
 
+    actions = {
+        Choices.HIT: lambda: handle_hit_action(ctx, access, player),
+        Choices.STAND: lambda: handle_next_player(ctx, access),
+    }
+
     try:
-        choice = Choice(get_payload(ctx.msg))
+        choice = Choices(get_payload(ctx.msg))
     except ValueError:
         return
     else:
-        await choose[choice]()
+        await actions[choice]()
 
 
-@States.WAITING_FOR_ANSWER_TO_REPEAT_QUESTION.register
+@States.WAITING_FOR_LAST_CHOICE.register
 async def last_action_clicked(ctx: GameCtxProxy, access: 'GAccessors'):
     if (payload := get_payload(ctx.msg)) is None:
         return
 
-    choose = {
+    if ctx.msg.from_id not in ctx.game.players_ids:
+        return
+
+    actions = {
         'stop': lambda: end_game(ctx, access),
         'again': lambda: repeat_game(ctx, access),
     }
 
     try:
-        await choose[payload]()
+        await actions[payload]()
     except KeyError:
         print('Bad payload')
 
