@@ -1,4 +1,4 @@
-from aiohttp_apispec import docs, request_schema, response_schema, querystring_schema
+from aiohttp_apispec import docs, response_schema, querystring_schema, json_schema
 
 from app.api.app.utils import json_response
 from app.api.auth.decorators import auth_required
@@ -34,10 +34,10 @@ class PlayersView(View):
 
     @auth_required
     @docs(tags=['players'], summary='Patch player data', description='Patch player data')
-    @request_schema(PlayerPatchRequestSchema)
+    @json_schema(PlayerPatchRequestSchema)
     @response_schema(PlayerInfoResponseSchema, 200)
     async def patch(self):
         chat_id, vk_id = self.data['chat_id'], self.data['vk_id']
         await self.store.players.patch(chat_id, vk_id, self.data)
         player = await self.store.players.get_player_by_vk_id(chat_id, vk_id)
-        return json_response(data=PlayerInfoResponseSchema().dump(player))
+        return json_response(PlayerInfoResponseSchema().dump(player))

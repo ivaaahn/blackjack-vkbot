@@ -48,7 +48,7 @@ class View(AiohttpView):
 
     @property
     def data(self) -> dict:
-        return self.request.get('data', {})
+        return self.request.get('json', {})
 
     @property
     def query_data(self) -> MultiDictProxy[str]:
