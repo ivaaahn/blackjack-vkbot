@@ -1,6 +1,5 @@
 import random
 import typing
-from pprint import pprint
 from typing import Optional
 
 import aiohttp
@@ -108,7 +107,7 @@ class VkApiAccessor(BaseAccessor):
         # pprint(f'{query=}')
 
         async with self.session.get(query) as resp:
-            resp = await resp.json()
+            _ = await resp.json()
             # pprint(f'{resp=}')
 
     async def get_chat(self, peer_id: int) -> dict:
@@ -123,6 +122,19 @@ class VkApiAccessor(BaseAccessor):
 
         async with self.session.get(query) as resp:
             return await resp.json()
+
+    async def get_conversations(self):
+        query = self._build_query(
+            host='https://api.vk.com/',
+            method='method/messages.getConversations',
+            params={
+                'access_token': self.cfg.token,
+            }
+        )
+
+        async with self.session.get(query) as resp:
+            return await resp.json()
+            # return await resp.json()
 
     async def get_users(self, vk_ids: list[int]) -> list[User]:
         query = self._build_query(
