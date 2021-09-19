@@ -1,30 +1,29 @@
-from datetime import datetime, date, timedelta
 from dataclasses import dataclass
+from datetime import datetime, timedelta
 from typing import Optional
-from uuid import UUID
 
 
 @dataclass
 class PlayerModel:
-    _id: UUID
     vk_id: int
+    chat_id: int
     first_name: str
     last_name: str
-    city: str
     cash: float
     last_bonus_date: datetime
     registered_at: datetime
-    birthday: Optional[date] = None
+    city: Optional[str] = None
+    birthday: Optional[datetime] = None
 
     def to_dict(self) -> dict:
         return {
-            '_id': self._id,
             'vk_id': self.vk_id,
+            'chat_id': self.chat_id,
             'first_name': self.first_name,
             'last_name': self.last_name,
-            'registered_at': str(self.registered_at),
-            'last_bonus_date': str(self.last_bonus_date),
-            'birthday': str(self.birthday),
+            'registered_at': self.registered_at,
+            'last_bonus_date': self.last_bonus_date,
+            'birthday': self.birthday,
             'city': self.city,
             'cash': self.cash,
         }
@@ -32,13 +31,13 @@ class PlayerModel:
     @staticmethod
     def from_dict(raw: dict) -> 'PlayerModel':
         return PlayerModel(
-            _id=raw['_id'],
             vk_id=raw['vk_id'],
+            chat_id=raw['chat_id'],
             first_name=raw['first_name'],
             last_name=raw['last_name'],
-            registered_at=datetime.fromisoformat(raw['registered_at']),
-            last_bonus_date=datetime.fromisoformat(raw['last_bonus_date']),
-            birthday=date.fromisoformat(raw['birthday']),
+            registered_at=raw['registered_at'],
+            last_bonus_date=raw['last_bonus_date'],
+            birthday=raw['birthday'],
             city=raw['city'],
             cash=raw['cash'],
         )
