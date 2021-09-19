@@ -3,7 +3,7 @@ from typing import Optional
 
 from pymongo.errors import DuplicateKeyError
 
-from app.api.settings.models import GameSettingsModel
+from app.api.game_settings.models import GameSettingsModel
 from app.base.base_accessor import BaseAccessor
 
 if typing.TYPE_CHECKING:
@@ -19,7 +19,7 @@ class GameSettingsAccessor(BaseAccessor):
         super().__init__(app)
 
     @property
-    def collect(self) -> "AsyncIOMotorCollection":
+    def coll(self) -> "AsyncIOMotorCollection":
         return self.app.mongo.collects.game_settings
 
     @property
@@ -53,15 +53,14 @@ class GameSettingsAccessor(BaseAccessor):
         )
 
         try:
-            await self.collect.insert_one(model.to_dict())
+            await self.coll.insert_one(model.to_dict())
         except DuplicateKeyError:
             pass
 
     async def get(self, _id: int) -> Optional[GameSettingsModel]:
         _id = self._DEFAULT_ID
-        raw = await self.collect.find_one({'_id': _id})
+        raw = await self.coll.find_one({'_id': _id})
+        return GameSettingsModel.from_dict(raw) if raw else None
 
-        if raw is not None:
-            return GameSettingsModel.from_dict(raw)
-
-        return None
+    async def patch(self, _id: int, data: dict) -> None:
+        await self.coll.update_one({'_id': _id}, {'$set': data})
