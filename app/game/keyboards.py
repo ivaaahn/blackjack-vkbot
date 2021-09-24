@@ -81,9 +81,34 @@ class Keyboards:
         ],
     ])
 
+    OKAY = Keyboard(one_time=False, buttons=[
+        [
+            TextButton(label='Окей', color=ButtonColor.NEGATIVE, payload='{"button": "ok"}'),
+        ],
+    ])
+
     GET_OUT = Keyboard(one_time=False, buttons=[
         [
             TextButton(label='Встать из-за стола', color=ButtonColor.NEGATIVE, payload='{"button": "get out"}'),
+        ],
+    ])
+
+    BJ_DEALER_WITH_ACE = Keyboard(one_time=False, buttons=[
+        [
+            TextButton(label='Забрать 1 к 1', color=ButtonColor.NEGATIVE, payload='{"button": "pick up 11"}'),
+            TextButton(label='Дождаться конца игры', color=ButtonColor.NEGATIVE, payload='{"button": "wait"}'),
+        ],
+    ])
+
+    BJ_DEALER_WITHOUT_ACE = Keyboard(one_time=False, buttons=[
+        [
+            TextButton(label='Окей', color=ButtonColor.NEGATIVE, payload='{"button": "wait"}'),
+        ],
+    ])
+
+    BJ_WIN_32 = Keyboard(one_time=False, buttons=[
+        [
+            TextButton(label='Забрать 3 к 2', color=ButtonColor.NEGATIVE, payload='{"button": "pick up 32"}'),
         ],
     ])
 

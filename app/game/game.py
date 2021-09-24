@@ -3,7 +3,7 @@ from typing import Optional
 from app.base.base_game import Game
 from app.base.base_game_accessor import BaseGameAccessor
 from app.game.deck import Deck
-from app.game.player import Player, PlayerStatus
+from app.game.player import Player
 from app.game.states import State, StateResolver
 from app.store.vk_api.dataclasses import UpdateMessage
 
@@ -61,24 +61,49 @@ class BlackJackGame(Game):
         registered, planned = len(self.players), self._planned_players_qty
         return f'{registered}/{planned}'
 
-    def define_results(self) -> None:
+    def handle_player_blackjack(self, player: Player) -> None:
+        d = self._dealer
+        if d.has_potential_bj is True:
+            if d.score == 10:
+                player.set_bj_waiting_for_end_status()
+            else:
+                player.set_bj_need_to_clarify_status()
+        else:
+            player.set_bj_win32_status()
+
+    def _define_results_with_dealer_bj(self) -> None:
         for p in self._players:
-            if p.status is not PlayerStatus.IN_GAME:
+            if p.result_defined:
                 continue
 
-            if not self.dealer.not_bust:
-                p.status = PlayerStatus.WIN
-
-            elif p.score > self.dealer.score:
-                p.status = PlayerStatus.WIN
-
-            elif p.score == self.dealer.score:
-                p.status = PlayerStatus.DRAW
-
+            if p.status_is_bj_waiting_for_end:
+                p.set_draw_status()
             else:
-                p.status = PlayerStatus.DEFEAT
+                p.set_defeat_status()
 
             p.update_cash()
+
+    def _define_results_without_dealer_bj(self) -> None:
+        d = self._dealer
+        for p in self._players:
+            if p.result_defined:
+                continue
+            if p.status_is_bj_waiting_for_end:
+                p.set_bj_win32_status()
+            elif d.not_bust is False or p.score > d.score:
+                p.set_win_status()
+            elif p.score == d.score:
+                p.set_draw_status()
+            else:
+                p.set_defeat_status()
+
+    def define_results(self) -> None:
+        d = self._dealer
+
+        if d.has_blackjack:
+            self._define_results_with_dealer_bj()
+        else:
+            self._define_results_without_dealer_bj()
 
     @property
     def dealer(self) -> Player:

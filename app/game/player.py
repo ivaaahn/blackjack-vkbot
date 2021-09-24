@@ -10,7 +10,10 @@ class PlayerStatus(str, Enum):
     WIN = 'Победа'
     IN_GAME = 'В игре'
     BUST = 'Перебор'
-    BJ = 'Блэкджек'
+    BJ_NEED_TO_CLARIFY = 'Надо уточнять'
+    BJ_WIN32 = 'Выиграл блэкджек (3:2)'
+    BJ_WIN11 = 'Выиграл блэкджек (1:1)'
+    BJ_WAITING_FOR_END = 'Блэкджек (ожидает конца игры)'
 
 
 class Player:
@@ -51,11 +54,76 @@ class Player:
             'status': self._status
         }
 
-    def update_cash(self):
-        if self.status is PlayerStatus.WIN:
-            self.cash += self.bet
-        elif self.status in (PlayerStatus.DEFEAT, PlayerStatus.BUST):
-            self.cash -= self.bet
+    def update_cash(self) -> None:
+        if self._status is PlayerStatus.IN_GAME:
+            return
+
+        if self.status_is_win or self.status_is_bj_win11:
+            self._cash += self.bet
+        elif self.status_is_defeat or self.status_is_bust:
+            self._cash -= self.bet
+        elif self.status_is_bj_win32:
+            self._cash += 1.5 * self.bet
+        elif self.status_is_draw:
+            pass
+
+    @property
+    def result_defined(self):
+        return self._status not in (
+            PlayerStatus.IN_GAME, PlayerStatus.BJ_WAITING_FOR_END, PlayerStatus.BJ_NEED_TO_CLARIFY)
+
+    @property
+    def status_is_bj_need_to_clarify(self) -> bool:
+        return self._status is PlayerStatus.BJ_NEED_TO_CLARIFY
+
+    @property
+    def status_is_bj_win11(self) -> bool:
+        return self._status is PlayerStatus.BJ_WIN11
+
+    @property
+    def status_is_bj_win32(self) -> bool:
+        return self._status is PlayerStatus.BJ_WIN32
+
+    @property
+    def status_is_bj_waiting_for_end(self) -> bool:
+        return self._status is PlayerStatus.BJ_WAITING_FOR_END
+
+    @property
+    def status_is_win(self):
+        return self._status is PlayerStatus.WIN
+
+    @property
+    def status_is_defeat(self):
+        return self._status is PlayerStatus.DEFEAT
+
+    @property
+    def status_is_draw(self):
+        return self._status is PlayerStatus.DRAW
+
+    @property
+    def status_is_bust(self):
+        return self._status is PlayerStatus.BUST
+
+    @property
+    def has_blackjack(self) -> int:
+        return self.cards_qty == 2 and self.score == 21
+
+    @property
+    def has_potential_bj(self) -> Optional[bool]:
+        """
+        ONLY FOR DEALER
+        Check after the cards are dealt whether the dealer can have blackjack.
+        :return: None if player is not dealer, else True/False
+        """
+
+        if not self.is_dealer:
+            return None
+
+        return self._score >= 10 and self.cards_qty == 1
+
+    @property
+    def cards_qty(self) -> int:
+        return len(self._cards)
 
     @property
     def status(self) -> PlayerStatus:
@@ -81,10 +149,40 @@ class Player:
         self._bet = None
         self._score = 0
         self._cards.clear()
+        self.set_in_game_status()
 
-    def set_bust(self):
-        self.status = PlayerStatus.BUST
+    def set_in_game_status(self) -> None:
+        self._status = PlayerStatus.IN_GAME
+
+    def set_bust_status(self):
+        self._status = PlayerStatus.BUST
         self.update_cash()
+
+    def set_win_status(self) -> None:
+        self._status = PlayerStatus.WIN
+        self.update_cash()
+
+    def set_draw_status(self) -> None:
+        self._status = PlayerStatus.DRAW
+        self.update_cash()
+
+    def set_defeat_status(self) -> None:
+        self._status = PlayerStatus.DEFEAT
+        self.update_cash()
+
+    def set_bj_win11_status(self) -> None:
+        self._status = PlayerStatus.BJ_WIN11
+        self.update_cash()
+
+    def set_bj_win32_status(self) -> None:
+        self._status = PlayerStatus.BJ_WIN32
+        self.update_cash()
+
+    def set_bj_waiting_for_end_status(self) -> None:
+        self._status = PlayerStatus.BJ_WAITING_FOR_END
+
+    def set_bj_need_to_clarify_status(self) -> None:
+        self._status = PlayerStatus.BJ_NEED_TO_CLARIFY
 
     @property
     def not_bust(self) -> bool:
@@ -107,8 +205,8 @@ class Player:
     @property
     def cards_info(self) -> str:
         ans = '%0A'.join([c.card_txt for c in self._cards])
-        if self.is_dealer and len(self._cards) == 1:
-            ans += f'%0A{Card.fake_card()}'
+        # if self.is_dealer and len(self._cards) == 1:
+        #     ans += f'%0A{Card.fake_card()}'
         return ans
 
     def place_bet(self, value: int) -> None:

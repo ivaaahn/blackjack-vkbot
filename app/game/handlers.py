@@ -102,15 +102,20 @@ async def action_clicked(ctx: GameCtxProxy, access: 'GAccessors'):
 
     actions = {
         Choices.HIT: lambda: handle_hit_action(ctx, access, player),
-        Choices.STAND: lambda: handle_next_player(ctx, access),
+        Choices.STAND: lambda: handle_stand_action(ctx, access, player),
+        Choices.BJ_WAIT: lambda: handle_bj_wait_action(ctx, access, player),
+        Choices.BJ_PICK_UP11: lambda: handle_bj_pick_up11_action(ctx, access, player),
+        Choices.BJ_PICK_UP32: lambda: handle_bj_pick_up32_action(ctx, access, player),
     }
 
     try:
         choice = Choices(get_payload(ctx.msg))
     except ValueError:
         return
-    else:
-        await actions[choice]()
+
+    res = await actions[choice]()
+
+    await dispatch(ctx, access, player, choice, res)
 
 
 @States.WAITING_FOR_LAST_CHOICE.register
@@ -130,4 +135,3 @@ async def last_action_clicked(ctx: GameCtxProxy, access: 'GAccessors'):
         await actions[payload]()
     except KeyError:
         print('Bad payload')
-

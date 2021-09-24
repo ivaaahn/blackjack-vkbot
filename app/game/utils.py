@@ -14,6 +14,9 @@ class CheckType(Enum):
 class Choices(str, Enum):
     HIT = 'hit'
     STAND = 'stand'
+    BJ_PICK_UP11 = 'pick up 11'
+    BJ_PICK_UP32 = 'pick up 32'
+    BJ_WAIT = 'wait'
 
 
 def get_username_by_id(user_id: int, chat: dict) -> str:

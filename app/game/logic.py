@@ -6,7 +6,7 @@ from app.game.game import GameCtxProxy, BlackJackGame
 from app.game.keyboards import Keyboards as Kbds, Keyboard
 from app.game.player import Player
 from app.game.states import States
-from app.game.utils import parse_bet_expr
+from app.game.utils import parse_bet_expr, Choices
 from app.store.vk_api.dataclasses import Message
 
 if TYPE_CHECKING:
@@ -107,57 +107,136 @@ async def complete_betting(ctx: GameCtxProxy, access: 'GAccessors'):
 
 async def hand_out_cards(ctx: GameCtxProxy, access: 'GAccessors'):
     g = ctx.game
-    g.deal_cards()
+    # TODO get_card
 
-    txt = f'%0A%0A'.join([f'◾ {p}%0A{p.cards_info}' for p in g.players_and_dealer])
-    await send(ctx, access, txt)
+    try:
+        g.deal_cards()
+    except IndexError as e:
+        await do_end(ctx, access)
+        await send(ctx, access, 'Колода закончилась! Данная игра не может быть продолжена', Kbds.START)
+        ctx.state = States.WAITING_FOR_START_CHOICE
+    else:
+        txt = f'%0A%0A'.join([f'◾ {p}%0A{p.cards_info}' for p in g.players_and_dealer])
+        await send(ctx, access, txt)
 
     # for player in ctx.game.players_and_dealer:
     #     await send(ctx, access, f'{player}%0A{player.cards}')
     # await send(ctx, access, f'{player}', photos=player.cards_photos)
 
 
+async def bj_ask_player(ctx: GameCtxProxy, access: 'GAccessors') -> None:
+    player, dealer = ctx.game.current_player, ctx.game.dealer
+
+    ctx.game.handle_player_blackjack(player)
+
+    answer = f'{player}, У тебя блэкджек!%0A'
+
+    if player.status_is_bj_need_to_clarify:
+        answer += 'Выбирай'
+        kbd = Kbds.BJ_DEALER_WITH_ACE
+    elif player.status_is_bj_win32:
+        answer += f'Поздравляем с победой!'
+        kbd = Kbds.BJ_WIN_32
+    else:
+        answer += 'Жди конца игры'
+        kbd = Kbds.BJ_DEALER_WITHOUT_ACE
+
+    await send(ctx, access, answer, kbd=kbd)
+
+
 async def ask_player(ctx: GameCtxProxy, access: 'GAccessors'):
+    curr_player = ctx.game.current_player
+
+    if curr_player.has_blackjack:
+        await bj_ask_player(ctx, access)
+    else:
+        await base_ask_player(ctx, access)
+
+
+async def base_ask_player(ctx: GameCtxProxy, access: 'GAccessors'):
     player, dealer = ctx.game.current_player, ctx.game.dealer
     answer = f'{player}, Сумма очков: {player.score} ({dealer}: {dealer.score})'
     await send(ctx, access, answer, kbd=Kbds.CHOOSE_ACTION)
 
 
-async def handle_hit_action(ctx: GameCtxProxy, access: 'GAccessors', player: Player) -> None:
-    player.add_card(ctx.game.deck.get_card())
-
-    answer = f'{player}%0A{player.cards_info}'
+async def handle_bj_pick_up11_action(ctx: GameCtxProxy, access: 'GAccessors', player: Player) -> bool:
+    player.set_bj_win11_status()
+    answer = f'{player}%0A, забирай 1:1!'
     await send(ctx, access, answer)
-    # answer = f'{player}, твои карты:'
-    # await send(ctx, access, answer, photos=player.cards_photos)
+    return True
 
-    if player.not_bust:
-        await ask_player(ctx, access)
+
+async def handle_bj_pick_up32_action(ctx: GameCtxProxy, access: 'GAccessors', player: Player) -> bool:
+    return True
+
+
+async def handle_bj_wait_action(ctx: GameCtxProxy, access: 'GAccessors', player: Player) -> bool:
+    player.set_bj_waiting_for_end_status()
+    answer = f'{player}, ожидай конца игры!'
+    await send(ctx, access, answer)
+    return True
+
+
+async def handle_hit_action(ctx: GameCtxProxy, access: 'GAccessors', player: Player) -> bool:
+    # TODO get_card
+    try:
+        player.add_card(ctx.game.deck.get_card())
+    except IndexError as e:
+        await do_end(ctx, access)
+        await send(ctx, access, 'Колода закончилась! Данная игра не может быть продолжена', Kbds.START)
+        ctx.state = States.WAITING_FOR_START_CHOICE
     else:
-        player.set_bust()
-        answer = f'{player}, много! (Сумма: {player.score})'
+        answer = f'{player}%0A{player.cards_info}'
         await send(ctx, access, answer)
-        await handle_next_player(ctx, access)
+        return player.not_bust
 
 
-async def handle_next_player(ctx: GameCtxProxy, access: 'GAccessors'):
+async def handle_player_bust(ctx: GameCtxProxy, access: 'GAccessors', player: Player) -> bool:
+    player.set_bust_status()
+    answer = f'{player}, много! (Сумма: {player.score})'
+    await send(ctx, access, answer)
+    return True
+
+
+async def handle_stand_action(ctx: GameCtxProxy, access: 'GAccessors', player: Player) -> bool:
+    return True
+
+
+async def dispatch(ctx: GameCtxProxy, access: 'GAccessors', player: Player, choice: Choices, action_res: bool) -> None:
+    if choice is Choices.HIT and action_res and player.score != 21:
+        await base_ask_player(ctx, access)
+        return
+
+    if choice is Choices.HIT and not action_res:
+        await handle_player_bust(ctx, access, player)
+
     if ctx.game.next_player():
         await ask_player(ctx, access)
     else:
-        ctx.game.handle_dealer()
-        await show_results(ctx, access)
+        # TODO get_card
+        try:
+            ctx.game.handle_dealer()
+        except IndexError as e:
+            await do_end(ctx, access)
+            await send(ctx, access, 'Колода закончилась! Данная игра не может быть продолжена', Kbds.START)
+            ctx.state = States.WAITING_FOR_START_CHOICE
+        else:
+            await handle_results(ctx, access)
+            await show_results(ctx, access)
+            ctx.state = States.WAITING_FOR_LAST_CHOICE
+
+
+async def handle_results(ctx: GameCtxProxy, access: 'GAccessors'):
+    ctx.game.define_results()
+    await update_cashes(ctx, access)
 
 
 async def show_results(ctx: GameCtxProxy, access: 'GAccessors'):
     game = ctx.game
-
-    game.define_results()
-    await update_cashes(ctx, access)
-
     d = game.dealer
-    # answer = f'Дилер, Сумма очков: {game.dealer.score}%0A'
-    # await send(ctx, access, answer, photos=game.dealer.cards_photos)
     answer = f'◾ {d}%0A{d.cards_info}%0A%0AСумма очков: {d.score}'
+    if d.has_blackjack:
+        answer += '(Блэк-джек)'
     await send(ctx, access, answer)
 
     answer = f'''
@@ -165,7 +244,6 @@ async def show_results(ctx: GameCtxProxy, access: 'GAccessors'):
     {'%0A'.join([f'🔺 {p} - {p.status.value} (Счет: {p.cash})' for p in game.players])} 
     '''
     await send(ctx, access, answer, Kbds.REPEAT_GAME_QUESTION)
-    ctx.state = States.WAITING_FOR_LAST_CHOICE
 
 
 async def init_game(ctx: GameCtxProxy, access: 'GAccessors', num_of_players: int) -> None:
