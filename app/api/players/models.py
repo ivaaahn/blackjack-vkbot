@@ -45,4 +45,7 @@ class PlayerModel:
     def check_bonus(self, minutes: int) -> bool:
         return datetime.now() - self.last_bonus_date > timedelta(minutes=minutes)
 
+    def __str__(self) -> str:
+        return f'[id{self.vk_id}|{self.first_name} {self.last_name}] - {self.cash}$'
+
 

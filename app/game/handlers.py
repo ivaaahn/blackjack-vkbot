@@ -26,6 +26,7 @@ async def start_action_clicked(ctx: GameCtxProxy, access: 'GAccessors') -> None:
         'new_game': lambda: handle_new_game(ctx, access),
         'bonus': lambda: handle_bonus(ctx, access),
         'balance': lambda: handle_balance(ctx, access),
+        'stat': lambda: handle_statistic(ctx, access),
         'cancel': lambda: do_cancel(ctx, access),
     }
 

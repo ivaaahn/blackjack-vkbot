@@ -27,6 +27,26 @@ async def handle_balance(ctx: GameCtxProxy, access: 'GAccessors') -> None:
     ctx.state = States.WAITING_FOR_START_CHOICE
 
 
+async def handle_statistic(ctx: GameCtxProxy, access: 'GAccessors') -> None:
+    sets = await access.settings.get(_id=0)
+    limit, offset = 10, 0
+    order_by, order_type = 'cash', -1
+
+    players = await access.players.get_players_list(
+        chat_id=ctx.chat_id,
+        offset=offset,
+        limit=limit,
+        order_by=order_by,
+        order_type=order_type
+    )
+
+    text = 'Топ 10 игроков чата:%0A%0A'
+    text += '%0A'.join(f'{idx + 1}) {p}' for idx, p in enumerate(players))
+
+    await send(ctx, access, text, Kbds.START)
+    ctx.state = States.WAITING_FOR_START_CHOICE
+
+
 async def handle_bonus(ctx: GameCtxProxy, access: 'GAccessors') -> None:
     sets = await access.settings.get(_id=0)
     created, player = await fetch_user_info(ctx, access, sets.start_cash)
@@ -94,7 +114,7 @@ async def hand_out_cards(ctx: GameCtxProxy, access: 'GAccessors'):
 
     # for player in ctx.game.players_and_dealer:
     #     await send(ctx, access, f'{player}%0A{player.cards}')
-        # await send(ctx, access, f'{player}', photos=player.cards_photos)
+    # await send(ctx, access, f'{player}', photos=player.cards_photos)
 
 
 async def ask_player(ctx: GameCtxProxy, access: 'GAccessors'):
@@ -146,8 +166,6 @@ async def show_results(ctx: GameCtxProxy, access: 'GAccessors'):
     '''
     await send(ctx, access, answer, Kbds.REPEAT_GAME_QUESTION)
     ctx.state = States.WAITING_FOR_LAST_CHOICE
-
-
 
 
 async def init_game(ctx: GameCtxProxy, access: 'GAccessors', num_of_players: int) -> None:
