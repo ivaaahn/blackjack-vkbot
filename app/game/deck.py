@@ -67,10 +67,8 @@ class Card:
             ans = 10
         elif self.rank in '23456789':
             ans = int(self.rank)
-        elif self.rank == 'a':
+        else:  # Ace
             ans = 11 if curr_sum + 11 <= 21 else 1
-        else:
-            ans = -1
 
         return ans
 
