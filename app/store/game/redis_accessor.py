@@ -42,7 +42,6 @@ class RedisGameAccessor(BaseGameAccessor):
         await self.db.set(state_key(chat), state)
 
     async def get_state(self, chat: int, default: Optional[int] = None) -> Optional[int]:
-        # TODO NONE of get?
         result = await self.db.get(state_key(chat))
         return default if result is None else int(result)
 
