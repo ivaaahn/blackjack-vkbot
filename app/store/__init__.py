@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING
 
+
 if TYPE_CHECKING:
     from app.app import Application
 
@@ -11,12 +12,14 @@ class Store:
         from app.store.admin.accessor import AdminAccessor
         from app.store.game.redis_accessor import RedisGameAccessor
         from app.store.game_settings.accessor import GameSettingsAccessor
+        from app.store.rabbit.accessor import RabbitAccessor
 
         self.game_settings = GameSettingsAccessor(app)
         self.admins = AdminAccessor(app)
         self.vk_api = VkApiAccessor(app)
         self.players = PlayersAccessor(app)
         self.game = RedisGameAccessor(app)
+        self.rabbit = RabbitAccessor(app)
 
 
 def setup_store(app: "Application"):

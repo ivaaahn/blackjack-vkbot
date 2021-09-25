@@ -52,6 +52,15 @@ class MongoConfig:
 
 
 @dataclass
+class RabbitConfig:
+    host: str
+    port: int
+    user: str
+    password: str
+    queue_name: str
+
+
+@dataclass
 class GameConfig:
     start_cash: float
     bonus: float
@@ -61,7 +70,6 @@ class GameConfig:
     num_of_decks: int
 
 
-
 @dataclass
 class Config:
     admin: AdminConfig
@@ -69,6 +77,7 @@ class Config:
     bot: BotConfig
     mongo: MongoConfig
     redis: RedisConfig
+    rabbit: RabbitConfig
     game: GameConfig
 
 
@@ -102,5 +111,6 @@ def setup_config(app: "Application", config_path: str):
             ),
         ),
         redis=RedisConfig(**raw_config['redis']),
-    game=GameConfig(**raw_config['game']),
+        game=GameConfig(**raw_config['game']),
+        rabbit=RabbitConfig(**raw_config['rabbit']),
     )

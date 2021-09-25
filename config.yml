@@ -22,6 +22,12 @@ redis:
   user: bjbot
   password: bjbot
   db: 0
+rabbit:
+  host: localhost
+  port: 5672
+  user: guest
+  password: guest
+  queue_name: vk_polling
 bot:
   token: 71537a16b313e2356b4fc47241558c813f25c22468524fad590a288c24713410349ea3603e95395a13a5c
   group_id: 202369435

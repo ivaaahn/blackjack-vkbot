@@ -9,16 +9,17 @@ from aiohttp_apispec import setup_aiohttp_apispec
 from aiohttp_session.cookie_storage import EncryptedCookieStorage
 from multidict import MultiDictProxy
 
-from app.api.admin.models import AdminModel
-from app.database.mongo import Mongo, setup_mongo
-from app.database.redis import Redis, setup_redis
-from app.store import setup_store, Store
+from .api.admin.models import AdminModel
+from .database.mongo import Mongo, setup_mongo
+from .database.redis import Redis, setup_redis
+from .database.rabbit import Rabbit, setup_rabbit
+from .store import setup_store, Store
 from .config import Config, setup_config
 from .logger import setup_logging
 from .api.app.middlewares import setup_middlewares
 from .api.app.routes import setup_routes
 from aiohttp_session import setup as setup_aiohttp_session
-from app.bot.manager import setup as setup_bot_manager, BotManager
+from .bot.manager import setup as setup_bot_manager, BotManager
 
 
 class Application(AiohttpApplication):
@@ -26,6 +27,7 @@ class Application(AiohttpApplication):
     store: Optional[Store] = None
     mongo: Optional[Mongo] = None
     redis: Optional[Redis] = None
+    rabbit: Optional[Rabbit] = None
     bot_manager: Optional[BotManager] = None
 
 
@@ -67,6 +69,7 @@ def setup_app(config_path: str) -> Application:
     setup_aiohttp_apispec(app, title='BlackJackBot', url='/docs/json', swagger_path='/docs')
     setup_redis(app)
     setup_mongo(app)
+    setup_rabbit(app)
     setup_store(app)
     setup_bot_manager(app)
     return app
