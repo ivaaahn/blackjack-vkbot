@@ -1,3 +1,4 @@
+import json
 import random
 import typing
 from typing import Optional
@@ -29,18 +30,18 @@ class VkApiAccessor(BaseAccessor):
 
     async def connect(self, app: "Application"):
         self.session = aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=False))
-        self.poller = Poller(self.app.store, self.app.bot_manager)
+        self.poller = Poller(self.app.store)
         await self._get_long_poll_service()
         await self.poller.start()
 
     async def disconnect(self, app: "Application"):
-        if self.session is not None:
-            await self.session.close()
-            self.session = None
-
         if self.poller is not None and self.poller.is_running:
             await self.poller.stop()
             self.poller = None
+            
+        if self.session is not None:
+            await self.session.close()
+            self.session = None
 
     @staticmethod
     def _build_query(host: str, method: str, params: dict) -> str:
@@ -69,7 +70,7 @@ class VkApiAccessor(BaseAccessor):
             self.server = response_body['server']
             self.ts = response_body['ts']
 
-    async def poll(self) -> list[Update]:
+    async def poll(self) -> str:
         query = self._build_query(
             host=self.server,
             method='',
@@ -86,7 +87,7 @@ class VkApiAccessor(BaseAccessor):
             self.ts = resp_json['ts']
             raw_updates = resp_json['updates']
 
-        return self._pack_updates(raw_updates)
+        return json.dumps(resp_json)
 
     async def send_message(self, message: Message) -> None:
         query_params = {
@@ -154,17 +155,3 @@ class VkApiAccessor(BaseAccessor):
             data = await resp.json()
 
         return [User.from_dict(u) for u in data['response']]
-
-    @staticmethod
-    def _pack_updates(raw_updates: dict) -> list[Update]:
-        return [
-            Update(
-                type=u['type'],
-                object=UpdateObject(
-                    message=UpdateMessage(
-                        from_id=u['object']['message']['from_id'],
-                        text=u['object']['message']['text'],
-                        id=u['object']['message']['id'],
-                        peer_id=u['object']['message']['peer_id'],
-                        payload=u['object']['message'].get('payload')
-                    ))) for u in raw_updates if u['type'] == 'message_new']

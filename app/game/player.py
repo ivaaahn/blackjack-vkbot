@@ -54,18 +54,19 @@ class Player:
             'status': self._status
         }
 
-    def update_cash(self) -> None:
-        if self._status is PlayerStatus.IN_GAME:
-            return
-
+    def calc_win(self) -> float:
         if self.status_is_win or self.status_is_bj_win11:
-            self._cash += self.bet
-        elif self.status_is_defeat or self.status_is_bust:
-            self._cash -= self.bet
+            return self._bet
         elif self.status_is_bj_win32:
-            self._cash += 1.5 * self.bet
-        elif self.status_is_draw:
-            pass
+            return 1.5 * self._bet
+        elif self.status_is_defeat or self.status_is_bust:
+            return -self._bet
+
+        return 0
+
+    def update_cash(self) -> None:
+        if self._status is not PlayerStatus.IN_GAME:
+            self._cash += self.calc_win()
 
     @property
     def result_defined(self):
@@ -150,6 +151,21 @@ class Player:
         self._score = 0
         self._cards.clear()
         self.set_in_game_status()
+
+    @property
+    def is_winner(self) -> bool:
+        return self._status in (
+            PlayerStatus.WIN,
+            PlayerStatus.BJ_WIN11,
+            PlayerStatus.BJ_WIN32,
+        )
+
+    @property
+    def is_loser(self) -> bool:
+        return self._status in (
+            PlayerStatus.DEFEAT,
+            PlayerStatus.BUST,
+        )
 
     def set_in_game_status(self) -> None:
         self._status = PlayerStatus.IN_GAME

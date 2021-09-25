@@ -23,7 +23,6 @@ def data_key(chat: int) -> str:
 class RedisGameAccessor(BaseGameAccessor):
     def __init__(self, app: "Application") -> None:
         super().__init__(app)
-        self.app = app
 
     @property
     def db(self):
