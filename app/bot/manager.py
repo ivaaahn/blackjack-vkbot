@@ -1,14 +1,20 @@
-from app.base.base_game_accessor import BaseGameAccessor
+import json
+import traceback
+
+from typing import TYPE_CHECKING
+from aio_pika import IncomingMessage
+
+from app.game.dataclasses import GAccessors
 from app.game.game import GameCtx
 from app.game.states import States
-from app.store.players.accessor import PlayersAccessor
-from app.store.vk_api.dataclasses import Update
-from app.game.dataclasses import GAccessors
-from typing import TYPE_CHECKING
+from app.store.vk_api.dataclasses import Update, UpdateObject, UpdateMessage
 
 if TYPE_CHECKING:
     from app.app import Application
+    from app.store.players.accessor import PlayersAccessor
     from app.store.vk_api.accessor import VkApiAccessor
+    from app.base.base_game_accessor import BaseGameAccessor
+    from app.store.game_settings.accessor import GameSettingsAccessor
 
 
 class BotManager:
@@ -20,34 +26,51 @@ class BotManager:
         return self.app.store.vk_api
 
     @property
-    def game_accessor(self) -> BaseGameAccessor:
+    def g_accessor(self) -> "BaseGameAccessor":
         return self.app.store.game
 
     @property
-    def player_accessor(self) -> PlayersAccessor:
+    def p_accessor(self) -> "PlayersAccessor":
         return self.app.store.players
 
     @property
-    def game_settings_accessor(self):
+    def gs_accessor(self) -> "GameSettingsAccessor":
         return self.app.store.game_settings
+
+    async def handle_rabbit_msg(self, msg: IncomingMessage) -> None:
+        async with msg.process():
+            updates_json = json.loads(msg.body.decode(encoding='utf-8'))['updates']
+            if updates_json:
+                await self.handle_updates(self._pack_updates(updates_json))
 
     async def handle_updates(self, updates: list[Update]) -> None:
         import app.game.handlers  # DO NOT DELETE
         for update in updates:
-            if update.type == 'message_new':
-                msg = update.object.message
-                game_ctx = GameCtx(self.game_accessor, msg.peer_id, msg)
-                game_accessors = GAccessors(self.vk_api, self.player_accessor, self.game_settings_accessor)
+            msg = update.object.message
+            async with GameCtx(self.g_accessor, msg.peer_id, msg).proxy() as ctx:
+                if ctx.state is None:
+                    ctx.state = States.WAITING_FOR_TRIGGER
 
-                async with game_ctx.proxy() as ctx:
-                    if ctx.state is None:
-                        ctx.state = States.WAITING_FOR_TRIGGER
-                    try:
-                        await ctx.state.handler(ctx, game_accessors)
-                    except Exception as e:
-                        print(e)
-                        print(e.args)
-                        print(e.__traceback__)
+                try:
+                    await ctx.state.handler(ctx, GAccessors(self.vk_api, self.p_accessor, self.gs_accessor))
+                except Exception as e:
+                    print(e)
+                    traceback.print_exc()
+
+    @staticmethod
+    def _pack_updates(raw_updates: dict) -> list[Update]:
+        return [
+            Update(
+                type=u['type'],
+                object=UpdateObject(
+                    message=UpdateMessage(
+                        from_id=u['object']['message']['from_id'],
+                        text=u['object']['message']['text'],
+                        id=u['object']['message']['id'],
+                        peer_id=u['object']['message']['peer_id'],
+                        payload=u['object']['message'].get('payload')
+                    ))) for u in raw_updates if u['type'] == 'message_new']
+
 
 def setup(app: "Application") -> None:
     app.bot_manager = BotManager(app)

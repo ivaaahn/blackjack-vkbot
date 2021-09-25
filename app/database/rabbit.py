@@ -35,7 +35,7 @@ class Rabbit(BaseDatabase):
         await self.conn.close()  # TODO When should I do it?
 
     async def register_consumer(self):
-        await self.queue.consume(self.app.bot_manager.handle_updates)
+        await self.queue.consume(self.app.bot_manager.handle_rabbit_msg)
 
 
 def setup_rabbit(app: "Application") -> None:
