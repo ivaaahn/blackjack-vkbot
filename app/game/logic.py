@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta as td
 from typing import TYPE_CHECKING
 
-from app.api.players.models import PlayerModel
+from app.api.players.models import PlayerModel, PlayerStats
 from app.game.game import GameCtxProxy, BlackJackGame
 from app.game.keyboards import Keyboards as Kbds, Keyboard
 from app.game.player import Player
@@ -28,7 +28,6 @@ async def handle_balance(ctx: GameCtxProxy, access: 'GAccessors') -> None:
 
 
 async def handle_statistic(ctx: GameCtxProxy, access: 'GAccessors') -> None:
-    sets = await access.settings.get(_id=0)
     limit, offset = 10, 0
     order_by, order_type = 'cash', -1
 
@@ -47,15 +46,32 @@ async def handle_statistic(ctx: GameCtxProxy, access: 'GAccessors') -> None:
     ctx.state = States.WAITING_FOR_START_CHOICE
 
 
+async def personal_player_statistic(ctx: GameCtxProxy, access: 'GAccessors', p: PlayerModel) -> str:
+    pos = await access.players.get_player_position(ctx.chat_id, p.cash, 'cash')
+    return f'''
+    Статистика для [id{p.vk_id}|{p.first_name} {p.last_name}]%0A%0A%0A
+    Позиция в рейтинге: {pos}%0A%0A
+    {p.stats}
+    '''
+
+
+async def handle_pers_statistic(ctx: GameCtxProxy, access: 'GAccessors') -> None:
+    sets = await access.settings.get(_id=0)
+    created, player = await fetch_user_info(ctx, access, sets.start_cash)
+
+    await send(ctx, access, await personal_player_statistic(ctx, access, player), Kbds.START)
+    ctx.state = States.WAITING_FOR_START_CHOICE
+
+
 async def handle_bonus(ctx: GameCtxProxy, access: 'GAccessors') -> None:
     sets = await access.settings.get(_id=0)
     created, player = await fetch_user_info(ctx, access, sets.start_cash)
 
     if created:
-        answer = f'''А вы у нас впервые, получайте свой бонус: {sets.bonus} у.е.%0A
+        answer = f'''А вы у нас впервые, поэтому мы Вам начисляем {sets.start_cash}$%0A
         Следующий бонус будет доступен {pretty_datetime(td(minutes=sets.bonus_period) + datetime.now())}'''
     elif player.check_bonus(sets.bonus_period):
-        answer = f'''Вы получаете ежедневный бонус: {sets.bonus} у.е.%0A
+        answer = f'''Вы получаете ежедневный бонус: {sets.bonus}$%0A
         Следующий бонус будет доступен {pretty_datetime(td(minutes=sets.bonus_period) + datetime.now())}'''
         await access.players.give_bonus(ctx.chat_id, player.vk_id, player.cash + sets.bonus)
     else:
@@ -75,6 +91,7 @@ async def fetch_user_info(ctx: GameCtxProxy, access: 'GAccessors', start_cash: f
     if db_user_data is None:
         flag = True
         vk_user_data = (await access.vk.get_users([ctx.msg.from_id]))[0]
+        sets = await access.settings.get(_id=0)
         await access.players.add_player(
             vk_id=vk_user_data.vk_id,
             chat_id=ctx.chat_id,
@@ -223,12 +240,12 @@ async def dispatch(ctx: GameCtxProxy, access: 'GAccessors', player: Player, choi
         else:
             await handle_results(ctx, access)
             await show_results(ctx, access)
+            await update_players_data(ctx, access)
             ctx.state = States.WAITING_FOR_LAST_CHOICE
 
 
 async def handle_results(ctx: GameCtxProxy, access: 'GAccessors'):
     ctx.game.define_results()
-    await update_cashes(ctx, access)
 
 
 async def show_results(ctx: GameCtxProxy, access: 'GAccessors'):
@@ -302,9 +319,29 @@ async def end_game(ctx: GameCtxProxy, access: 'GAccessors') -> None:
     await do_end(ctx, access)
 
 
-async def update_cashes(ctx: GameCtxProxy, access: 'GAccessors') -> None:
+async def calculate_stats(ctx: GameCtxProxy, access: 'GAccessors', player: Player) -> PlayerStats:
+    p = await access.players.get_player_by_vk_id(ctx.chat_id, player.vk_id)
+    st = p.stats
+    st.max_cash = max(st.max_cash, player.cash)
+    st.number_of_games += 1
+
+    if player.is_winner:
+        st.number_of_wins += 1
+        st.max_win = player.calc_win() if st.max_win is None else max(st.max_win, player.calc_win())
+    elif player.is_loser:
+        st.number_of_defeats += 1
+
+    st.max_bet = player.bet if st.max_bet is None else max(st.max_bet, player.bet)
+    st.average_bet = player.bet if st.average_bet is None \
+        else (st.average_bet * (st.number_of_games - 1) + player.bet) / st.number_of_games
+
+    return st
+
+
+async def update_players_data(ctx: GameCtxProxy, access: 'GAccessors') -> None:
     for player in ctx.game.players:
-        await access.players.update_cash(ctx.chat_id, player.vk_id, player.cash)
+        new_stats = await calculate_stats(ctx, access, player)
+        await access.players.update_after_game(ctx.chat_id, player.vk_id, player.cash, new_stats)
 
 
 async def do_cancel(ctx: GameCtxProxy, access: 'GAccessors') -> None:

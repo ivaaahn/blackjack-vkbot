@@ -1,11 +1,11 @@
 import typing
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Any
 
 from pymongo.errors import DuplicateKeyError
 
 from app.api.chats.models import ChatModel
-from app.api.players.models import PlayerModel
+from app.api.players.models import PlayerModel, PlayerStats
 from app.base.base_accessor import BaseAccessor
 from app.store.players.pipelines import group_by_chat_pipeline, chat_pagination_pipeline, match_pipeline
 
@@ -68,6 +68,18 @@ class PlayersAccessor(BaseAccessor):
     async def update_cash(self, chat_id: int, vk_id: int, new_cash: float) -> None:
         await self.patch(chat_id, vk_id, {'cash': new_cash})
 
+    async def get_player_position(self, chat_id: int, value: Any, field: str = 'cash') -> Optional[int]:
+        return await self.coll.count_documents({'$and': [{'chat_id': chat_id}, {field: {'$gt': value}}]}) + 1
+
+    async def update_after_game(self,
+                                chat_id: int,
+                                vk_id: int,
+                                new_cash: float,
+                                new_stats: PlayerStats,
+                                ) -> None:
+
+        await self.patch(chat_id, vk_id, {'cash': new_cash, 'stats': new_stats.to_dict()})
+
     async def give_bonus(self, chat_id: int, vk_id: int, new_cash: float) -> None:
         await self.coll.update_one(
             {'chat_id': chat_id, 'vk_id': vk_id},
@@ -100,6 +112,7 @@ class PlayersAccessor(BaseAccessor):
                 'birthday': birthday,
                 'city': city,
                 'cash': start_cash,
+                'stats': PlayerStats(max_cash=start_cash).to_dict()
             })
 
         except DuplicateKeyError:

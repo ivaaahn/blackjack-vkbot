@@ -51,6 +51,16 @@ class PlayersInfoRequestQuerySchema(BasePlayerSchema):
             raise ValidationError('Order_type must be equal to -1 or 1.')
 
 
+class PlayerStatsSchema(Schema):
+    max_cash = fields.Float(required=True)
+    number_of_games = fields.Int(required=True)
+    number_of_wins = fields.Int(required=True)
+    number_of_defeats = fields.Int(required=True)
+    max_bet = fields.Float(required=True, allow_none=True)
+    average_bet = fields.Float(required=True, allow_none=True)
+    max_win = fields.Float(required=True, allow_none=True)
+
+
 class PlayerInfoResponseSchema(BasePlayerSchema):
     # _id = fields.UUID(required=True)
     first_name = fields.Str(required=True)
@@ -60,9 +70,8 @@ class PlayerInfoResponseSchema(BasePlayerSchema):
     last_bonus_date = fields.DateTime(required=True)
     registered_at = fields.DateTime(required=True)
     birthday = fields.Date()
+    stats = fields.Nested(PlayerStatsSchema)
 
 
 class PlayersInfoListResponseSchema(Schema):
     players = fields.Nested(PlayerInfoResponseSchema, many=True)
-
-

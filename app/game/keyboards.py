@@ -73,8 +73,15 @@ class Keyboards:
         ],
         [
             TextButton(label='Забрать бонус', color=ButtonColor.PRIMARY, payload='{"button": "bonus"}'),
+        ],
+        [
             TextButton(label='Проверить счёт', color=ButtonColor.PRIMARY, payload='{"button": "balance"}'),
+        ],
+        [
             TextButton(label='Статистика', color=ButtonColor.PRIMARY, payload='{"button": "stat"}'),
+        ],
+        [
+            TextButton(label='Моя статистика', color=ButtonColor.PRIMARY, payload='{"button": "pers_stat"}'),
         ],
         [
             TextButton(label='Выход', color=ButtonColor.NEGATIVE, payload='{"button": "cancel"}'),
