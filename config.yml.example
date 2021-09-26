@@ -1,0 +1,46 @@
+user_token: ...
+
+session:
+  key: ...
+admin:
+  email: ...
+  password: ...
+mongo:
+  host: mongo
+#  host: localhost
+  port: 27017
+  db: BlackjackBotDatabase
+  user: ...
+  password: ...
+  uuidRepresentation: standard
+  collections:
+    players: players
+    admins: admins
+    game_settings: game_settings
+redis:
+  host: redis
+#  host: localhost
+  port: 6379
+  user: ...
+  password: ...
+  db: 0
+rabbit:
+  host: rabbit
+#  host: localhost
+  port: 5672
+  user: ...
+  password: ...
+  queue_name: vk_polling
+bot:
+  token: ...
+  group_id: ...
+game:
+  min_bet: 1
+  max_bet: 10000
+  start_cash: 5000
+  bonus: 1000
+  bonus_period: 5  # minutes
+  num_of_decks: 1
+
+
+
