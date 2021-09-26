@@ -26,8 +26,8 @@ class BotConfig:
 
 @dataclass
 class RedisConfig:
-    host: str = "localhost"
-    port: int = 6379
+    host: str
+    port: int
     user: str = "redis"
     password: str = "redis"
     db: int = 0
