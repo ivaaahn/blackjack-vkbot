@@ -1,0 +1,57 @@
+version: "3"
+
+services:
+  rabbit:
+    build:
+      context: ./docker/rabbit/
+      dockerfile: Dockerfile
+    container_name: rabbit
+    expose:
+      - 5672
+      - 15672
+    volumes:
+      - rabbit_data_volume:/var/lib/rabbit/
+      - rabbit_logs_volume:/var/log/rabbit/
+    restart: unless-stopped
+
+  redis:
+    image: redis:alpine
+    container_name: redis
+    expose:
+      - 6379
+    volumes:
+      - redis_data_volume:/data
+    restart: unless-stopped
+
+  mongo:
+    image: mongo
+    container_name: mongo
+    ports:
+      - "27018:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=$MONGO_USERNAME
+      - MONGO_INITDB_ROOT_PASSWORD=$MONGO_PWD
+      - MONGO_INITDB_DATABASE=$MONGO_INIT_DB
+    volumes:
+      - mongo_data_volume:/data/db
+    restart: unless-stopped
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: app
+    depends_on:
+      - redis
+      - mongo
+      - rabbit
+    restart: unless-stopped
+    volumes:
+      - "/etc/timezone:/etc/timezone:ro"
+      - "/etc/localtime:/etc/localtime:ro"
+
+volumes:
+  redis_data_volume:
+  mongo_data_volume:
+  rabbit_data_volume:
+  rabbit_logs_volume:
