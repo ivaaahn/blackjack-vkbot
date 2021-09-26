@@ -2,6 +2,7 @@ import typing
 from datetime import datetime
 from typing import Optional, Any
 
+from pymongo import ASCENDING, DESCENDING
 from pymongo.errors import DuplicateKeyError
 
 from app.api.chats.models import ChatModel
@@ -28,7 +29,12 @@ class PlayersAccessor(BaseAccessor):
         return self.app.config.game
 
     async def connect(self, app: "Application") -> None:
-        pass
+        try:
+            await self.coll.create_index([('chat_id', ASCENDING), ('vk_id', ASCENDING)], unique=True)
+            await self.coll.create_index([('chat_id', ASCENDING)])
+            await self.coll.create_index([('cash', DESCENDING)])
+        except:
+            pass
 
     async def disconnect(self, app: "Application") -> None:
         pass
