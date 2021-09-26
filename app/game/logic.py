@@ -6,7 +6,7 @@ from app.game.game import GameCtxProxy, BlackJackGame
 from app.game.keyboards import Keyboards as Kbds, Keyboard
 from app.game.player import Player
 from app.game.states import States
-from app.game.utils import parse_bet_expr, Choices
+from app.game.utils import parse_bet_expr, Choices, pretty_time_delta
 from app.store.vk_api.dataclasses import Message
 
 if TYPE_CHECKING:
@@ -69,14 +69,14 @@ async def handle_bonus(ctx: GameCtxProxy, access: 'GAccessors') -> None:
 
     if created:
         answer = f'''А вы у нас впервые, поэтому мы Вам начисляем {sets.start_cash}$%0A
-        Следующий бонус будет доступен {pretty_datetime(td(minutes=sets.bonus_period) + datetime.now())}'''
+        Следующий бонус будет доступен через {pretty_time_delta(td(minutes=sets.bonus_period))}'''
     elif player.check_bonus(sets.bonus_period):
         answer = f'''Вы получаете ежедневный бонус: {sets.bonus}$%0A
-        Следующий бонус будет доступен {pretty_datetime(td(minutes=sets.bonus_period) + datetime.now())}'''
+        Следующий бонус будет доступен через {pretty_time_delta(td(minutes=sets.bonus_period))}'''
         await access.players.give_bonus(ctx.chat_id, player.vk_id, player.cash + sets.bonus)
     else:
         answer = f'''К сожалению бонус еще не доступен :(%0A
-        Ближайший бонус будет доступен {pretty_datetime(td(minutes=sets.bonus_period) + player.last_bonus_date)}'''
+        Ближайший бонус будет доступен через {pretty_time_delta(player.last_bonus_date + td(minutes=sets.bonus_period) - datetime.now())}'''
 
     await send(ctx, access, answer, Kbds.START)
 
@@ -358,20 +358,8 @@ async def do_back(ctx: GameCtxProxy, access: 'GAccessors') -> None:
     ctx.state = ctx.last_state
 
 
-def check_back(payload: str) -> bool:
-    return payload == 'back'
-
-
-def check_cancel(payload: str) -> bool:
-    return payload == 'cancel'
-
-
 async def hide_keyboard(ctx: GameCtxProxy, access: 'GAccessors', text: str) -> None:
     await send(ctx, access, text)
-
-
-def pretty_datetime(raw: datetime) -> str:
-    return raw.strftime('%b %d %Y в %I:%M%p')
 
 
 async def send(ctx: GameCtxProxy, access: 'GAccessors', txt: str, kbd: Keyboard = Kbds.EMPTY, photos: str = ''):
