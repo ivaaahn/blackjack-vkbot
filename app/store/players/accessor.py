@@ -91,7 +91,7 @@ class PlayersAccessor(BaseAccessor):
             {'chat_id': chat_id, 'vk_id': vk_id},
             {
                 '$set': {
-                    'last_bonus_date': datetime.now(),
+                    'last_bonus_date': datetime.utcnow(),
                     'cash': new_cash
                 }
             }
@@ -113,8 +113,8 @@ class PlayersAccessor(BaseAccessor):
                 'chat_id': chat_id,
                 'first_name': first_name,
                 'last_name': last_name,
-                'registered_at': datetime.now(),
-                'last_bonus_date': datetime.now(),
+                'registered_at': datetime.utcnow(),
+                'last_bonus_date': datetime.utcnow(),
                 'birthday': birthday,
                 'city': city,
                 'cash': start_cash,

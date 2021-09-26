@@ -91,7 +91,10 @@ class PlayerModel:
         )
 
     def check_bonus(self, minutes: int) -> bool:
-        return datetime.now() - self.last_bonus_date > timedelta(minutes=minutes)
+        return datetime.utcnow() - self.last_bonus_date > timedelta(minutes=minutes)
+
+    def td_to_bonus(self, bonus_period: int) -> timedelta:
+        return self.last_bonus_date + timedelta(minutes=bonus_period) - datetime.utcnow()
 
     # def personal_info(self, position: int) -> str:
     #     return f'''

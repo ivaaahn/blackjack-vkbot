@@ -76,7 +76,7 @@ async def handle_bonus(ctx: GameCtxProxy, access: 'GAccessors') -> None:
         await access.players.give_bonus(ctx.chat_id, player.vk_id, player.cash + sets.bonus)
     else:
         answer = f'''К сожалению бонус еще не доступен :(%0A
-        Ближайший бонус будет доступен через {pretty_time_delta(player.last_bonus_date + td(minutes=sets.bonus_period) - datetime.now())}'''
+        Ближайший бонус будет доступен через {pretty_time_delta(player.td_to_bonus(sets.bonus_period))}'''
 
     await send(ctx, access, answer, Kbds.START)
 
@@ -91,7 +91,6 @@ async def fetch_user_info(ctx: GameCtxProxy, access: 'GAccessors', start_cash: f
     if db_user_data is None:
         flag = True
         vk_user_data = (await access.vk.get_users([ctx.msg.from_id]))[0]
-        sets = await access.settings.get(_id=0)
         await access.players.add_player(
             vk_id=vk_user_data.vk_id,
             chat_id=ctx.chat_id,
