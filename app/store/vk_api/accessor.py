@@ -8,7 +8,7 @@ from aiohttp.client import ClientSession
 
 from app.base.base_accessor import BaseAccessor
 from app.store.vk_api.dataclasses import Message, Update, UpdateObject, UpdateMessage, User
-# from app.store.vk_api.poller import Poller
+from app.store.vk_api.poller import Poller
 
 if typing.TYPE_CHECKING:
     from app.app import Application
@@ -21,7 +21,7 @@ class VkApiAccessor(BaseAccessor):
         self.session: Optional[ClientSession] = None
         self.key: Optional[str] = None
         self.server: Optional[str] = None
-        # self.poller: Optional[Poller] = None
+        self.poller: Optional[Poller] = None
         self.ts: Optional[int] = None
 
     @property
@@ -30,9 +30,9 @@ class VkApiAccessor(BaseAccessor):
 
     async def connect(self, app: "Application"):
         self.session = aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=False))
-        # self.poller = Poller(self.app.store)
+        self.poller = Poller(self.app.store)
         await self._get_long_poll_service()
-        # await self.poller.start()
+        await self.poller.start()
 
     async def disconnect(self, app: "Application"):
         if self.poller is not None and self.poller.is_running:
@@ -55,8 +55,8 @@ class VkApiAccessor(BaseAccessor):
         return url
 
     async def _get_long_poll_service(self):
-        group_id = self.cfg.group_id
-        token = self.cfg.token
+        group_id = self.app.config.bot.group_id
+        token = self.app.config.bot.token
 
         query = self._build_query(
             host='https://api.vk.com/',
