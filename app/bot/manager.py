@@ -6,6 +6,7 @@ from aio_pika import IncomingMessage
 
 from app.game.dataclasses import GAccessors
 from app.game.game import GameCtx
+from app.game.logic import do_force_cancel
 from app.game.states import States
 from app.store.vk_api.dataclasses import Update, UpdateObject, UpdateMessage
 
@@ -51,11 +52,14 @@ class BotManager:
                 if ctx.state is None:
                     ctx.state = States.WAITING_FOR_TRIGGER
 
+                accessors = GAccessors(self.vk_api, self.p_accessor, self.gs_accessor)
+
                 try:
-                    await ctx.state.handler(ctx, GAccessors(self.vk_api, self.p_accessor, self.gs_accessor))
+                    await ctx.state.handler(ctx, accessors)
                 except Exception as e:
                     print(e)
                     traceback.print_exc()
+                    await do_force_cancel(ctx, accessors)
 
     @staticmethod
     def _pack_updates(raw_updates: dict) -> list[Update]:

@@ -112,7 +112,6 @@ async def complete_registration(ctx: GameCtxProxy, access: 'GAccessors') -> None
     Ваши счета: %0A{ctx.game.players_cashes_info}
     '''
     await send(ctx, access, answer, Kbds.GET_OUT)
-
     ctx.state = States.WAITING_FOR_BETS
 
 
@@ -132,7 +131,7 @@ async def hand_out_cards(ctx: GameCtxProxy, access: 'GAccessors'):
         await send(ctx, access, 'Колода закончилась! Данная игра не может быть продолжена', Kbds.START)
         ctx.state = States.WAITING_FOR_START_CHOICE
     else:
-        txt = f'%0A%0A'.join([f'◾ {p}%0A{p.cards_info}' for p in g.players_and_dealer])
+        txt = f'%0A%0A'.join([f'◾ {p}, вот твои карты:%0A{p.cards_info}' for p in g.players_and_dealer])
         await send(ctx, access, txt)
 
     # for player in ctx.game.players_and_dealer:
@@ -341,6 +340,11 @@ async def update_players_data(ctx: GameCtxProxy, access: 'GAccessors') -> None:
     for player in ctx.game.players:
         new_stats = await calculate_stats(ctx, access, player)
         await access.players.update_after_game(ctx.chat_id, player.vk_id, player.cash, new_stats)
+
+
+async def do_force_cancel(ctx: GameCtxProxy, access: 'GAccessors') -> None:
+    await hide_keyboard(ctx, access, 'Ой, что-то пошло не так :(')
+    await do_end(ctx, access)
 
 
 async def do_cancel(ctx: GameCtxProxy, access: 'GAccessors') -> None:
