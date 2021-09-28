@@ -1,41 +1,41 @@
-import typing
 from typing import Optional
 from uuid import uuid4
 
+from motor.motor_asyncio import AsyncIOMotorCollection
 from pymongo.errors import DuplicateKeyError
 
 from app.api.admin.models import AdminModel
-from app.base.base_accessor import BaseAccessor
 from app.api.admin.utils import hash_pwd
+from app.base.mongo_accessor import MongoAccessor
+from app.config import Config, AdminConfig
+from app.databases import Databases
+from app.app_logger import get_logger
 
-if typing.TYPE_CHECKING:
-    from app.app import Application
-    from motor.motor_asyncio import AsyncIOMotorCollection
+logger = get_logger(__file__)
 
 
-class AdminAccessor(BaseAccessor):
-    def __init__(self, app: "Application") -> None:
-        super().__init__(app)
-
-    @property
-    def collect(self) -> "AsyncIOMotorCollection":
-        return self.app.mongo.collects.admins
+class AdminAccessor(MongoAccessor):
+    def __init__(self, databases: Databases, config: Config) -> None:
+        super().__init__(databases, config)
 
     @property
-    def cfg(self):
-        return self.app.config.admin
+    def coll(self) -> AsyncIOMotorCollection:
+        return self.mongo.collects.admins
 
-    async def connect(self, app: "Application"):
+    @property
+    def cfg(self) -> AdminConfig:
+        return self.config.admin
+
+    async def connect(self) -> None:
         await self.create_admin(
             email=self.cfg.email,
             password=self.cfg.password
         )
 
-    async def disconnect(self, app: "Application"):
-        pass
+        logger.info('Admin accessor connected')
 
     async def get_by_email(self, email: str) -> Optional[AdminModel]:
-        raw_admin = await self.collect.find_one({'email': email})
+        raw_admin = await self.coll.find_one({'email': email})
 
         if raw_admin is not None:
             return AdminModel.from_dict(raw_admin)
@@ -46,6 +46,6 @@ class AdminAccessor(BaseAccessor):
         model = AdminModel(_id=uuid4(), email=email, password=hash_pwd(password))
 
         try:
-            await self.collect.insert_one(model.to_dict())
+            await self.coll.insert_one(model.to_dict())
         except DuplicateKeyError:
             pass

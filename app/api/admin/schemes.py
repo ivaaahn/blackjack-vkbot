@@ -6,6 +6,10 @@ class AdminResponseSchema(Schema):
     email = fields.Str(required=True)
 
 
-class AdminAuthRequestSchema(Schema):
+class AdminLoginRequestSchema(Schema):
     email = fields.Str(required=True)
     password = fields.Str(required=True)
+
+
+class AdminLogoutRequestSchema(Schema):
+    pass

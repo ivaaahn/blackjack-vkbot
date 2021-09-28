@@ -23,9 +23,6 @@ class Card:
     _RANKS = '23456789tjkqa'
     _SUITS = 'cdhs'
 
-    # _PHOTOS: dict[str, str] = {k: str(v) for k, v in zip([r + s for r in _RANKS for s in _SUITS],
-    #                                                      range(457239077, 457239129))}
-
     def __init__(self, rank: Optional[int] = None, suit: Optional[int] = None, d: Optional[dict] = None) -> None:
         if d is None:
             self._rank = self._RANKS[rank]
@@ -39,10 +36,6 @@ class Card:
             'rank': self._rank,
             'suit': self._suit,
         }
-
-    # @property
-    # def photo(self) -> str:
-    #     return 'photo-202369435_' + self._PHOTOS[self.rank + self.suit]
 
     @staticmethod
     def fake_card() -> str:

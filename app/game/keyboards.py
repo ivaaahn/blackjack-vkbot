@@ -119,15 +119,6 @@ class Keyboards:
         ],
     ])
 
-    # LK = Keyboard(one_time=False, buttons=[
-    #     [
-    #         TextButton(label='Получить ежедневный бонус', color=ButtonColor.NEGATIVE, payload='{"button": "bonus"}'),
-    #     ],
-    #     [
-    #         TextButton(label='Назад', color=ButtonColor.NEGATIVE, payload='{"button": "back"}'),
-    #     ],
-    # ])
-
     NUMBER_OF_PLAYERS = Keyboard(one_time=False, buttons=[
         [
             TextButton(label='Один игрок', color=ButtonColor.PRIMARY, payload='{"button": "1"}'),
@@ -138,7 +129,6 @@ class Keyboards:
         ],
         [
             TextButton(label='Отменить игру', color=ButtonColor.NEGATIVE, payload='{"button": "cancel"}'),
-            # TextButton(label='Назад', color=ButtonColor.NEGATIVE, payload='{"button": "back"}'),
         ],
     ])
 
@@ -155,7 +145,6 @@ class Keyboards:
         ])
 
     CHOOSE_ACTION = Keyboard(
-        # inline=True,
         one_time=False,
         buttons=[
             [

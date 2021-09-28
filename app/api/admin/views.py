@@ -1,17 +1,17 @@
 from aiohttp.web_exceptions import HTTPForbidden
 from aiohttp_apispec import docs, response_schema, json_schema
-from aiohttp_session import new_session
+from aiohttp_session import new_session, get_session
 
 from app.api.app.utils import json_response
 from app.api.auth.decorators import auth_required
 from app.app import View
-from .schemes import AdminResponseSchema, AdminAuthRequestSchema
+from .schemes import AdminResponseSchema, AdminLoginRequestSchema, AdminLogoutRequestSchema
 from .utils import is_password_valid
 
 
 class AdminLoginView(View):
-    @docs(tags=["admin"], summary="Get info about current user", description="Get info about current user")
-    @json_schema(AdminAuthRequestSchema)
+    @docs(tags=["admin"], summary="Login admin", description="Login admin")
+    @json_schema(AdminLoginRequestSchema)
     @response_schema(AdminResponseSchema, 200)
     async def post(self):
         email, password = self.data["email"], self.data["password"]
@@ -24,6 +24,21 @@ class AdminLoginView(View):
 
         session = await new_session(request=self.request)
         session['admin'] = response_data
+
+        return json_response(data=response_data)
+
+
+class AdminLogoutView(View):
+    @auth_required
+    @docs(tags=["admin"], summary="Logout admin", description="Logout admin")
+    @json_schema(AdminLogoutRequestSchema)
+    @response_schema(AdminResponseSchema, 200)
+    async def post(self):
+        admin = self.request.admin
+        response_data = AdminResponseSchema().dump(admin)
+
+        session = await get_session(self.request)
+        session.invalidate()
 
         return json_response(data=response_data)
 

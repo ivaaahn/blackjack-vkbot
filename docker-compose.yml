@@ -36,21 +36,36 @@ services:
       - mongo_data_volume:/data/db
     restart: unless-stopped
 
-  app:
+  api:
     build:
       context: .
-      dockerfile: Dockerfile
-    container_name: app
+      dockerfile: ./docker/api/Dockerfile
+    container_name: api
     ports:
       - "8080:8080"
+    depends_on:
+      - mongo
+    restart: unless-stopped
+
+  poller:
+    build:
+      context: .
+      dockerfile: ./docker/poller/Dockerfile
+    container_name: poller
+    depends_on:
+      - rabbit
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: .
+      dockerfile: ./docker/worker/Dockerfile
+    container_name: worker
     depends_on:
       - redis
       - mongo
       - rabbit
     restart: unless-stopped
-    volumes:
-      - "/etc/timezone:/etc/timezone:ro"
-      - "/etc/localtime:/etc/localtime:ro"
 
 volumes:
   redis_data_volume:

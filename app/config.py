@@ -1,10 +1,5 @@
-import typing
-from dataclasses import dataclass
-
 import yaml
-
-if typing.TYPE_CHECKING:
-    from .app import Application
+from dataclasses import dataclass
 
 
 @dataclass
@@ -28,8 +23,8 @@ class BotConfig:
 class RedisConfig:
     host: str
     port: int
-    user: str = "redis"
-    password: str = "redis"
+    user: str = 'redis'
+    password: str = 'redis'
     db: int = 0
 
 
@@ -81,14 +76,14 @@ class Config:
     game: GameConfig
 
 
-def setup_config(app: "Application", config_path: str):
+def setup_config(config_path: str) -> Config:
     with open(config_path, "r") as f:
         raw_config = yaml.safe_load(f)
 
-    app.config = Config(
+    return Config(
         admin=AdminConfig(
-            email=raw_config["admin"]["email"],
-            password=raw_config["admin"]["password"],
+            email=raw_config['admin']['email'],
+            password=raw_config['admin']['password'],
         ),
         session=SessionConfig(
             key=raw_config['session']['key']
