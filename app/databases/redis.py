@@ -26,9 +26,9 @@ class Redis(BaseDatabase):
 
         self.client = from_url(
             url=f'redis://{cfg.host}',
-            # port=cfg.port,
+            port=cfg.port,
             # username=cfg.user,
-            # password=cfg.password,
+            password=cfg.password,
             db=cfg.db,
             decode_responses=True,
         )

@@ -53,7 +53,9 @@ class Poller:
         logger.info('Poller started')
 
         while self.is_running:
-            if updates := await self.store.vk_api.poll():
+            updates = await self.store.vk_api.poll()
+            logger.info(f'Updates: {updates}')
+            if updates:
                 await self.rabbit.send_message(updates)
 
 

@@ -67,6 +67,7 @@ class Worker:
     async def handle_rabbit_msg(self, msg: IncomingMessage) -> None:
         async with msg.process():
             updates_json = json.loads(msg.body.decode(encoding='utf-8'))['updates']
+            logger.info(f'Updates: {updates_json}')
             if updates_json:
                 await self.handle_updates(self._pack_updates(updates_json))
 

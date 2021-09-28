@@ -1,0 +1,7 @@
+FROM redis:alpine
+
+ADD redis.conf /usr/local/etc/redis/
+
+RUN chown redis:redis /usr/local/etc/redis/redis.conf
+
+CMD redis-server /usr/local/etc/redis/redis.conf --requirepass $REDIS_PASSWORD
