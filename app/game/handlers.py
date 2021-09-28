@@ -1,16 +1,14 @@
-from app.game.deck import Card
 from app.game.logic import *
 from app.game.states import States
 from app.game.utils import get_payload, Choices
 
-if TYPE_CHECKING:
-    from app.game.dataclasses import GAccessors
+from app.game.dataclasses import GAccessors
 
 START_MSG = '/go'
 
 
 @States.WAITING_FOR_TRIGGER.register
-async def trigger_received(ctx: GameCtxProxy, access: 'GAccessors') -> None:
+async def trigger_received(ctx: GameCtxProxy, access: GAccessors) -> None:
     if START_MSG in ctx.msg.text:
         answer = 'Привет, меня зовут BlackjackBot!'
         await send(ctx, access, answer, kbd=Kbds.START)
@@ -18,7 +16,7 @@ async def trigger_received(ctx: GameCtxProxy, access: 'GAccessors') -> None:
 
 
 @States.WAITING_FOR_START_CHOICE.register
-async def start_action_clicked(ctx: GameCtxProxy, access: 'GAccessors') -> None:
+async def start_action_clicked(ctx: GameCtxProxy, access: GAccessors) -> None:
     if (payload := get_payload(ctx.msg)) is None:
         return
 
@@ -35,7 +33,7 @@ async def start_action_clicked(ctx: GameCtxProxy, access: 'GAccessors') -> None:
 
 
 @States.WAITING_FOR_PLAYERS_AMOUNT.register
-async def players_amount_clicked(ctx: GameCtxProxy, access: 'GAccessors') -> None:
+async def players_amount_clicked(ctx: GameCtxProxy, access: GAccessors) -> None:
     if (payload := get_payload(ctx.msg)) is None:
         return
 
@@ -56,7 +54,7 @@ async def players_amount_clicked(ctx: GameCtxProxy, access: 'GAccessors') -> Non
 
 
 @States.WAITING_FOR_REGISTRATION.register
-async def registration_clicked(ctx: GameCtxProxy, access: 'GAccessors') -> None:
+async def registration_clicked(ctx: GameCtxProxy, access: GAccessors) -> None:
     if (payload := get_payload(ctx.msg)) is None:
         return
 
@@ -74,7 +72,7 @@ async def registration_clicked(ctx: GameCtxProxy, access: 'GAccessors') -> None:
 
 
 @States.WAITING_FOR_BETS.register
-async def bet_received(ctx: GameCtxProxy, access: 'GAccessors') -> None:
+async def bet_received(ctx: GameCtxProxy, access: GAccessors) -> None:
     if (player := ctx.game.get_player_by_id(ctx.msg.from_id)) is None:
         return
 
@@ -88,14 +86,13 @@ async def bet_received(ctx: GameCtxProxy, access: 'GAccessors') -> None:
         await place_bet(ctx, access, player)
 
     if ctx.game.all_players_bet:
-        # await complete_betting(ctx, access)
         await hand_out_cards(ctx, access)
         await ask_player(ctx, access)
         ctx.state = States.WAITING_FOR_ACTION
 
 
 @States.WAITING_FOR_ACTION.register
-async def action_clicked(ctx: GameCtxProxy, access: 'GAccessors'):
+async def action_clicked(ctx: GameCtxProxy, access: GAccessors):
     player = ctx.game.current_player
 
     if ctx.msg.from_id != player.vk_id:
@@ -120,7 +117,7 @@ async def action_clicked(ctx: GameCtxProxy, access: 'GAccessors'):
 
 
 @States.WAITING_FOR_LAST_CHOICE.register
-async def last_action_clicked(ctx: GameCtxProxy, access: 'GAccessors'):
+async def last_action_clicked(ctx: GameCtxProxy, access: GAccessors):
     if (payload := get_payload(ctx.msg)) is None:
         return
 

@@ -1,4 +1,4 @@
-from marshmallow import Schema, fields, validates, ValidationError, validates_schema
+from marshmallow import Schema, fields, validates, ValidationError
 
 from app.api.players.schemes import PlayerInfoResponseSchema
 

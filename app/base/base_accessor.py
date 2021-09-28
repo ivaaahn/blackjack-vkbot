@@ -1,22 +1,20 @@
-import typing
 from abc import ABCMeta, abstractmethod
 from logging import getLogger
 
-if typing.TYPE_CHECKING:
-    from app.app import Application
+from app.config import Config
+from app.databases import Databases
 
 
 class BaseAccessor(metaclass=ABCMeta):
-    def __init__(self, app: "Application"):
-        self.app = app
+    def __init__(self, databases: Databases, config: Config):
+        self.databases = databases
+        self.config = config
         self.logger = getLogger("accessor")
-        app.on_startup.append(self.connect)
-        app.on_cleanup.append(self.disconnect)
 
     @abstractmethod
-    async def connect(self, app: "Application") -> None:
+    async def connect(self) -> None:
         pass
 
     @abstractmethod
-    async def disconnect(self, app: "Application") -> None:
+    async def disconnect(self) -> None:
         pass

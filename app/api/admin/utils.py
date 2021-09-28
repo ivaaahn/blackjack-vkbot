@@ -10,7 +10,14 @@ def is_password_valid(truth_password: str, password: str) -> bool:
 
 
 def admin_from_session(session: Optional[dict]) -> AdminModel:
-    return AdminModel(_id=session['admin']['_id'], email=session['admin']['email'], password=None)
+    try:
+        _id = session['admin']['_id']
+        email = session['admin']['email']
+    except:
+        pass
+    else:
+        return AdminModel(_id=_id, email=email, password=None)
+
 
 
 def hash_pwd(raw_password: str) -> str:

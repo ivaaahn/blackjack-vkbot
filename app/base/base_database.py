@@ -1,21 +1,16 @@
 from abc import ABCMeta, abstractmethod
 
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from app.app import Application
+from app.config import Config
 
 
 class BaseDatabase(metaclass=ABCMeta):
-    def __init__(self, app: "Application") -> None:
-        self.app = app
-        app.on_startup.append(self.connect)
-        app.on_cleanup.append(self.disconnect)
+    def __init__(self, config: Config) -> None:
+        self.config = config
 
     @abstractmethod
-    async def connect(self, app: "Application") -> None:
+    async def connect(self) -> None:
         return
 
     @abstractmethod
-    async def disconnect(self, app: "Application") -> None:
+    async def disconnect(self) -> None:
         return

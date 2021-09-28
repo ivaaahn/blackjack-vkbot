@@ -1,43 +1,39 @@
-import typing
 from datetime import datetime
 from typing import Optional, Any
 
+from motor.motor_asyncio import AsyncIOMotorCollection
 from pymongo import ASCENDING, DESCENDING
 from pymongo.errors import DuplicateKeyError
 
 from app.api.chats.models import ChatModel
 from app.api.players.models import PlayerModel, PlayerStats
-from app.base.base_accessor import BaseAccessor
+from app.base.mongo_accessor import MongoAccessor
+from app.config import Config
+from app.databases import Databases
 from app.store.players.pipelines import group_by_chat_pipeline, chat_pagination_pipeline, match_pipeline
+from app.app_logger import get_logger
 
-if typing.TYPE_CHECKING:
-    from app.app import Application
-    from app.config import GameConfig
-    from motor.motor_asyncio import AsyncIOMotorCollection
+logger = get_logger(__file__)
 
 
-class PlayersAccessor(BaseAccessor):
-    def __init__(self, app: "Application") -> None:
-        super().__init__(app)
+class PlayersAccessor(MongoAccessor):
+    def __init__(self, databases: Databases, config: Config) -> None:
+        super().__init__(databases, config)
 
     @property
-    def coll(self) -> "AsyncIOMotorCollection":
-        return self.app.mongo.collects.players
+    def coll(self) -> AsyncIOMotorCollection:
+        return self.mongo.collects.players
 
-    @property
-    def game_cfg(self) -> 'GameConfig':
-        return self.app.config.game
-
-    async def connect(self, app: "Application") -> None:
+    async def connect(self) -> None:
+        logger.info('Player accessor connected')
         try:
             await self.coll.create_index([('chat_id', ASCENDING), ('vk_id', ASCENDING)], unique=True)
             await self.coll.create_index([('chat_id', ASCENDING)])
             await self.coll.create_index([('cash', DESCENDING)])
         except:
-            pass
-
-    async def disconnect(self, app: "Application") -> None:
-        pass
+            logger.info('Indexes for player collection have already created')
+        else:
+            logger.info('Indexes for player collection created')
 
     async def get_chat_by_id(self, chat_id: int) -> Optional[ChatModel]:
         pipeline = match_pipeline('chat_id', chat_id) + group_by_chat_pipeline()

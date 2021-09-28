@@ -1,20 +1,19 @@
-import typing
 from abc import abstractmethod
 from typing import Optional
 
 from app.base.base_accessor import BaseAccessor
-
-if typing.TYPE_CHECKING:
-    from app.app import Application
+from app.config import Config
+from app.databases import Databases
 
 
 class BaseGameAccessor(BaseAccessor):
-    def __init__(self, app: "Application"):
-        super().__init__(app)
+    def __init__(self, databases: Databases, config: Config):
+        super().__init__(databases, config)
 
-    @property
-    @abstractmethod
-    def db(self):
+    async def connect(self) -> None:
+        pass
+
+    async def disconnect(self) -> None:
         pass
 
     @abstractmethod

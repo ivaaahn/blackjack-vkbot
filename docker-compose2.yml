@@ -2,7 +2,7 @@ version: "3"
 
 services:
   rabbit:
-    image: ivaaahn/bjbot-rabbit
+    image: ivaaahn/bjbot-rabbit:latest
     container_name: rabbit
     ports:
       - "5672:5672"
@@ -13,10 +13,12 @@ services:
     restart: unless-stopped
 
   redis:
-    image: redis:alpine
+    image: ivaaahn/bjbot-redis:1.0
     container_name: redis
     ports:
       - "6379:6379"
+    environment:
+      - REDIS_PASSWORD=$REDIS_PASSWORD
     volumes:
       - redis_data_volume:/data
     restart: unless-stopped
@@ -34,14 +36,31 @@ services:
       - mongo_data_volume:/data/db
     restart: unless-stopped
 
-  app:
-    image: ivaaahn/bjbot-python
-    container_name: app
+  api:
+    image: ivaaahn/bjbot-api:1.1
+    container_name: api
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mongo
+    restart: unless-stopped
+
+  poller:
+    image: ivaaahn/bjbot-poller:1.1
+    container_name: poller
+    depends_on:
+      - rabbit
+    restart: unless-stopped
+
+  worker:
+    image: ivaaahn/bjbot-worker:1.1
+    container_name: worker
     depends_on:
       - redis
       - mongo
       - rabbit
     restart: unless-stopped
+
 
 volumes:
   redis_data_volume:

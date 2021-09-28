@@ -3,9 +3,9 @@ from typing import Optional
 from app.base.base_game import Game
 from app.base.base_game_accessor import BaseGameAccessor
 from app.game.deck import Deck
-from app.game.player import Player
-from app.game.states import State, StateResolver
 from app.store.vk_api.dataclasses import UpdateMessage
+from .player import Player
+from .states import State, StateResolver
 
 
 class BlackJackGame(Game):

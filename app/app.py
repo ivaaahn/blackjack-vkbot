@@ -6,29 +6,25 @@ from aiohttp.web import (
     Request as AiohttpRequest,
 )
 from aiohttp_apispec import setup_aiohttp_apispec
+from aiohttp_session import setup as setup_aiohttp_session
 from aiohttp_session.cookie_storage import EncryptedCookieStorage
 from multidict import MultiDictProxy
 
 from .api.admin.models import AdminModel
-from .database.mongo import Mongo, setup_mongo
-from .database.redis import Redis, setup_redis
-from .database.rabbit import Rabbit, setup_rabbit
-from .store import setup_store, Store
-from .config import Config, setup_config
-from .logger import setup_logging
 from .api.app.middlewares import setup_middlewares
 from .api.app.routes import setup_routes
-from aiohttp_session import setup as setup_aiohttp_session
-from .bot.manager import setup as setup_bot_manager, BotManager
+from .config import Config, setup_config
+from .databases import Databases, setup_databases
+from .store import setup_store, Store
+from app.app_logger import get_logger
+
+logger = get_logger(__file__)
 
 
 class Application(AiohttpApplication):
     config: Optional[Config] = None
     store: Optional[Store] = None
-    mongo: Optional[Mongo] = None
-    redis: Optional[Redis] = None
-    rabbit: Optional[Rabbit] = None
-    bot_manager: Optional[BotManager] = None
+    databases: Optional[Databases] = None
 
 
 class Request(AiohttpRequest):
@@ -61,15 +57,16 @@ app = Application()
 
 
 def setup_app(config_path: str) -> Application:
-    setup_logging(app)
-    setup_config(app, config_path)
+    app.config = setup_config(config_path)
     setup_routes(app)
     setup_aiohttp_session(app, EncryptedCookieStorage(app.config.session.key))
     setup_middlewares(app)
     setup_aiohttp_apispec(app, title='BlackJackBot', url='/docs/json', swagger_path='/docs')
-    setup_redis(app)
-    setup_mongo(app)
-    setup_rabbit(app)
-    setup_store(app)
-    setup_bot_manager(app)
+    app.databases = setup_databases(app.config)
+    app.store = setup_store(app.databases, app.config)
+
+    app.on_startup.append(app.databases.connect_aiohttp)
+    app.on_startup.append(app.store.connect_aiohttp)
+    app.on_cleanup.append(app.store.disconnect_aiohttp)
+    app.on_cleanup.append(app.databases.disconnect_aiohttp)
     return app

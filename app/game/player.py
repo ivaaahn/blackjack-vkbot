@@ -11,9 +11,9 @@ class PlayerStatus(str, Enum):
     IN_GAME = 'В игре'
     BUST = 'Перебор'
     BJ_NEED_TO_CLARIFY = 'Надо уточнять'
-    BJ_WIN32 = 'Выиграл блэкджек (3:2)'
-    BJ_WIN11 = 'Выиграл блэкджек (1:1)'
-    BJ_WAITING_FOR_END = 'Блэкджек (ожидает конца игры)'
+    BJ_WIN32 = 'Выиграл блэк-джек (3:2)'
+    BJ_WIN11 = 'Выиграл блэк-джек (1:1)'
+    BJ_WAITING_FOR_END = 'Блэк-джек (ожидает конца игры)'
 
 
 class Player:
