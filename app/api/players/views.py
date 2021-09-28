@@ -14,21 +14,18 @@ class PlayersView(View):
     @response_schema(PlayersInfoListResponseSchema, 200)
     async def get(self):
         data, db = self.query_data, self.store.players
-        chat_id = data['chat_id']
+        chat_id, vk_id = data.get('chat_id'), data.get('vk_id')
+        limit, offset = data.get('limit'), data.get('offset')
+        order_by, order_type = data.get('order_by'), data.get('order_type')
 
-        if (vk_id := data.get('vk_id')) is not None:
-            players = [await db.get_player_by_vk_id(chat_id, vk_id)]
-        else:
-            limit, offset = data.get('limit'), data.get('offset')
-            order_by, order_type = data.get('order_by'), data.get('order_type')
-
-            players = await db.get_players_list(
-                chat_id=chat_id,
-                offset=offset,
-                limit=limit,
-                order_by=order_by,
-                order_type=order_type
-            )
+        players = await db.get_players_list(
+            vk_id=vk_id,
+            chat_id=chat_id,
+            offset=offset,
+            limit=limit,
+            order_by=order_by,
+            order_type=order_type,
+        )
 
         return json_response(data={'players': PlayerInfoResponseSchema().dump(players, many=True)})
 
@@ -39,5 +36,5 @@ class PlayersView(View):
     async def patch(self):
         chat_id, vk_id = self.data['chat_id'], self.data['vk_id']
         await self.store.players.patch(chat_id, vk_id, self.data)
-        player = await self.store.players.get_player_by_vk_id(chat_id, vk_id)
+        player = await self.store.players.get_player_by_vk_id(chat_id=chat_id, vk_id=vk_id)
         return json_response(PlayerInfoResponseSchema().dump(player))

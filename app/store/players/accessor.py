@@ -40,7 +40,8 @@ class PlayersAccessor(MongoAccessor):
         result = await self.coll.aggregate(pipeline).to_list(None)
         return ChatModel.from_dict(result[0]) if result else None
 
-    async def get_player_by_vk_id(self, chat_id: int, vk_id: int) -> Optional[PlayerModel]:
+    async def get_player_by_vk_id(self, vk_id: int, chat_id: int) -> Optional[PlayerModel]:
+        # request = {'vk_id': vk_id} if chat_id is None else {'chat_id': chat_id, 'vk_id': vk_id}
         raw_player = await self.coll.find_one({'chat_id': chat_id, 'vk_id': vk_id})
         return PlayerModel.from_dict(raw_player) if raw_player else None
 
@@ -55,13 +56,23 @@ class PlayersAccessor(MongoAccessor):
         return [ChatModel.from_dict(chat_raw) for chat_raw in result]
 
     async def get_players_list(self,
-                               chat_id: int,
                                offset: int,
                                limit: int,
-                               order_by: Optional[str],
-                               order_type: int) -> list[PlayerModel]:
+                               order_by: str,
+                               order_type: int,
+                               vk_id: Optional[int] = None,
+                               chat_id: Optional[int] = None,
+                               ) -> list[PlayerModel]:
 
-        cursor = self.coll.find({'chat_id': chat_id}).sort(order_by, order_type).skip(offset).limit(limit)
+        filter_ = {}
+
+        if vk_id is not None:
+            filter_['vk_id'] = vk_id
+
+        if chat_id is not None:
+            filter_['chat_id'] = chat_id
+
+        cursor = self.coll.find(filter_).sort(order_by, order_type).skip(offset).limit(limit)
         return [PlayerModel.from_dict(p_raw) for p_raw in await cursor.to_list(None)]
 
     async def patch(self, chat_id: int, vk_id: int, data: dict) -> None:

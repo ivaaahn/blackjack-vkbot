@@ -73,6 +73,8 @@ def run_poller(poller: Poller) -> None:
         loop.run_forever()
     except KeyboardInterrupt:
         logger.info('KeyboardInterrupt')
+    except Exception as e:
+        logger.exception(f'Poller exception: {e}')
     finally:
         loop.run_until_complete(poller.stop())
         logger.info('Closing loop ...')

@@ -116,6 +116,8 @@ def run_worker(worker: Worker) -> None:
         loop.run_forever()
     except KeyboardInterrupt:
         logger.info('KeyboardInterrupt')
+    except Exception as e:
+        logger.exception(f'Worker exception: {e}')
     finally:
         loop.run_until_complete(worker.stop())
         logger.info('Closing loop ...')

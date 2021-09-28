@@ -1,12 +1,14 @@
 from marshmallow import Schema, fields, validates, ValidationError, validates_schema
 
+#
+# class BasePlayerSchema(Schema):
+#     chat_id = fields.Int()
+#     vk_id = fields.Int(required=True)
 
-class BasePlayerSchema(Schema):
+
+class PlayerPatchRequestSchema(Schema):
     chat_id = fields.Int(required=True)
     vk_id = fields.Int(required=True)
-
-
-class PlayerPatchRequestSchema(BasePlayerSchema):
     cash = fields.Float()
     last_bonus_date = fields.DateTime()
 
@@ -21,8 +23,9 @@ class PlayerPatchRequestSchema(BasePlayerSchema):
             raise ValidationError('It is necessary to set at least one of the parameters: cash, last_bonus_date')
 
 
-class PlayersInfoRequestQuerySchema(BasePlayerSchema):
+class PlayersInfoRequestQuerySchema(Schema):
     vk_id = fields.Int(required=False)
+    chat_id = fields.Int(required=False)
     limit = fields.Int(missing=10)
     offset = fields.Int(missing=0)
     order_by = fields.Str(missing='cash')
@@ -61,8 +64,10 @@ class PlayerStatsSchema(Schema):
     max_win = fields.Float(required=True, allow_none=True)
 
 
-class PlayerInfoResponseSchema(BasePlayerSchema):
+class PlayerInfoResponseSchema(Schema):
     # _id = fields.UUID(required=True)
+    vk_id = fields.Int(required=True)
+    chat_id = fields.Int(required=True)
     first_name = fields.Str(required=True)
     last_name = fields.Str(required=True)
     city = fields.Str()

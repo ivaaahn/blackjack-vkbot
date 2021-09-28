@@ -32,6 +32,7 @@ async def handle_statistic(ctx: GameCtxProxy, access: 'GAccessors') -> None:
     order_by, order_type = 'cash', -1
 
     players = await access.players.get_players_list(
+        vk_id=None,
         chat_id=ctx.chat_id,
         offset=offset,
         limit=limit,
@@ -87,7 +88,7 @@ async def fetch_user_info(ctx: GameCtxProxy, access: 'GAccessors', start_cash: f
     """
 
     flag = False
-    db_user_data = await access.players.get_player_by_vk_id(ctx.chat_id, ctx.msg.from_id)
+    db_user_data = await access.players.get_player_by_vk_id(chat_id=ctx.chat_id, vk_id=ctx.msg.from_id)
     if db_user_data is None:
         flag = True
         vk_user_data = (await access.vk.get_users([ctx.msg.from_id]))[0]
@@ -101,7 +102,7 @@ async def fetch_user_info(ctx: GameCtxProxy, access: 'GAccessors', start_cash: f
             start_cash=start_cash,
         )
 
-    return flag, await access.players.get_player_by_vk_id(ctx.chat_id, ctx.msg.from_id)
+    return flag, await access.players.get_player_by_vk_id(chat_id=ctx.chat_id, vk_id=ctx.msg.from_id)
 
 
 async def complete_registration(ctx: GameCtxProxy, access: 'GAccessors') -> None:
@@ -318,7 +319,7 @@ async def end_game(ctx: GameCtxProxy, access: 'GAccessors') -> None:
 
 
 async def calculate_stats(ctx: GameCtxProxy, access: 'GAccessors', player: Player) -> PlayerStats:
-    p = await access.players.get_player_by_vk_id(ctx.chat_id, player.vk_id)
+    p = await access.players.get_player_by_vk_id(chat_id=ctx.chat_id, vk_id=player.vk_id)
     st = p.stats
     st.max_cash = max(st.max_cash, player.cash)
     st.number_of_games += 1
