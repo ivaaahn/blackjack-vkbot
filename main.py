@@ -12,23 +12,23 @@ logger = get_logger(__file__)
 
 
 @click.command()
-@click.option('--service', default='poller', help='Choose service to run')
+@click.option("--service", default="poller", help="Choose service to run")
 def main(service: str) -> None:
     logger.info(f'Service is "{service}"')
-    cfg_path = os.path.join(os.path.dirname(__file__), 'config.yml')
+    cfg_path = os.path.join(os.path.dirname(__file__), "config.yml")
 
     choose = {
-        'api': lambda: run_app(setup_app(cfg_path)),
-        'poller': lambda: run_poller(setup_poller(cfg_path)),
-        'worker': lambda: run_worker(setup_worker(cfg_path)),
+        "api": lambda: run_app(setup_app(cfg_path)),
+        "poller": lambda: run_poller(setup_poller(cfg_path)),
+        "worker": lambda: run_worker(setup_worker(cfg_path)),
     }
 
     try:
         func = choose[service]
     except KeyError:
-        logger.exception(f'Bad service was received: {service}')
+        logger.exception(f"Bad service was received: {service}")
     else:
-        logger.info('Service is okay!')
+        logger.info("Service is okay!")
         func()
 
 
