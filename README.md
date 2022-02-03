@@ -1,1 +1,1 @@
-# kts-course-blackjackbot
+# Выпускной проект летней школы KTS Studio 2021.
