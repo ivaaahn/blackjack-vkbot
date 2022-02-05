@@ -2,13 +2,20 @@ import asyncio
 from dataclasses import dataclass
 from typing import Optional, Mapping, Type
 
-from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase, AsyncIOMotorCollection
+from motor.motor_asyncio import (
+    AsyncIOMotorClient,
+    AsyncIOMotorDatabase,
+    AsyncIOMotorCollection,
+)
 
 from proj.store import Store
 from proj.store.base.accessor import ConnectAccessor
-from proj.store.mongo.config import ConfigType, MongoConfig
+from proj.store.mongo.config import ConfigType, MongoConfig, MongoCollectionsConfig
 
-__all__ = ('MongoCollections', 'MongoAccessor', )
+__all__ = (
+    "MongoCollections",
+    "MongoAccessor",
+)
 
 
 @dataclass
@@ -30,13 +37,24 @@ class MongoAccessor(ConnectAccessor[Store, ConfigType]):
         config: Optional[Mapping] = None,
         config_type: Type[ConfigType] = MongoConfig,
     ):
-        super().__init__(
-            store, name=name, config=config, config_type=config_type
-        )
+        super().__init__(store, name=name, config=config, config_type=config_type)
+        self.config.collections = MongoCollectionsConfig(**self.config.collections)
 
         self._client: Optional[AsyncIOMotorClient] = None
         self._db: Optional[AsyncIOMotorDatabase] = None
         self._collections: Optional[MongoCollections] = None
+
+    @property
+    def admins_coll(self) -> AsyncIOMotorCollection:
+        return self._collections.admins
+
+    @property
+    def players_coll(self) -> AsyncIOMotorCollection:
+        return self._collections.players
+
+    @property
+    def game_settings_coll(self) -> AsyncIOMotorCollection:
+        return self._collections.game_settings
 
     async def _connect(self) -> None:
         while True:
@@ -46,8 +64,7 @@ class MongoAccessor(ConnectAccessor[Store, ConfigType]):
                 username=self.config.user,
                 password=self.config.password,
                 uuidRepresentation=self.config.uuidRepresentation,
-                serverSelectionTimeoutMS=self.config.server_selection_timeout
-
+                serverSelectionTimeoutMS=self.config.server_selection_timeout,
             )
 
             self._db = self._client[self.config.db]
@@ -68,4 +85,3 @@ class MongoAccessor(ConnectAccessor[Store, ConfigType]):
 
     async def _disconnect(self):
         pass
-

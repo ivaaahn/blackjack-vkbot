@@ -1,5 +1,5 @@
 import asyncio
-from typing import Optional, Mapping, Type
+from typing import Optional, Mapping, Type, Callable
 
 from aio_pika import connect, Channel, Exchange, Queue
 from aio_pika.connection import ConnectionType
@@ -8,7 +8,7 @@ from proj.store import Store
 from proj.store.base.accessor import ConnectAccessor
 from proj.store.rabbit.config import ConfigType, RabbitConfig
 
-__all__ = ('RabbitAccessor')
+__all__ = ("RabbitAccessor",)
 
 
 class RabbitAccessor(ConnectAccessor[Store, ConfigType]):
@@ -23,9 +23,7 @@ class RabbitAccessor(ConnectAccessor[Store, ConfigType]):
         config: Optional[Mapping] = None,
         config_type: Type[ConfigType] = RabbitConfig,
     ):
-        super().__init__(
-            store, name=name, config=config, config_type=config_type
-        )
+        super().__init__(store, name=name, config=config, config_type=config_type)
 
         self._connection: Optional[ConnectionType] = None
         self._channel: Optional[Channel] = None
@@ -57,6 +55,6 @@ class RabbitAccessor(ConnectAccessor[Store, ConfigType]):
     async def disconnect(self) -> None:
         await self._connection.close()
 
-    async def register_consumer(self, func):
+    async def register_consumer(self, func: Callable):
         await self._queue.consume(func)
         self.logger.info("Consumer registered")

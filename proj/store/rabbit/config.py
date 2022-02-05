@@ -12,4 +12,4 @@ class RabbitConfig:
     reconnect_timeout: int = 5
 
 
-ConfigType = TypeVar('ConfigType', bound=RabbitConfig)
+ConfigType = TypeVar("ConfigType", bound=RabbitConfig)

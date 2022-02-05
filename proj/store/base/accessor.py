@@ -3,14 +3,15 @@ import inspect
 import logging
 import weakref
 from logging import getLogger
-from typing import Generic, TypeVar, Optional, Mapping, Type, Set, Callable, Awaitable
+from typing import Generic, Optional, Mapping, Type, Set, Callable, Awaitable
 
-S = TypeVar("S")
-ConfigType = TypeVar("ConfigType")
+from proj.services.app_logger import get_logger
+from proj.store.base import S, ConfigType
+
 CallbackType = Callable[[], Awaitable[None]]
 
 
-class BaseAccessor(Generic[S, ConfigType]):
+class Accessor(Generic[S, ConfigType]):
     class Meta:
         name = None
 
@@ -27,14 +28,16 @@ class BaseAccessor(Generic[S, ConfigType]):
         self._name_is_custom = name is not None
         self._raw_config = config or store.config.get(self._name) or {}
 
+        self._parse_config(config_type)
+        self._logger = get_logger(f"accessor.{self._name}")
+
+    def _parse_config(self, config_type: Type[ConfigType]):
         try:
             self._config = config_type(**self._raw_config) if config_type else None
         except Exception as err:
             raise ValueError(
                 f"Error parsing config of {self._name} accessor: {str(err)}"
             ) from err
-
-        self._logger = getLogger(f"accessor.{self._name}")
 
     @property
     def store(self) -> S:
@@ -49,10 +52,6 @@ class BaseAccessor(Generic[S, ConfigType]):
         return self._logger
 
     @property
-    def loop(self) -> asyncio.AbstractEventLoop:
-        return self.store.loop
-
-    @property
     def raw_config(self) -> Mapping:
         return self._raw_config
 
@@ -61,7 +60,7 @@ class BaseAccessor(Generic[S, ConfigType]):
         return self._config
 
 
-class ConnectAccessor(BaseAccessor[S, ConfigType]):
+class ConnectAccessor(Accessor[S, ConfigType]):
     def __init__(
         self,
         store: S,
@@ -72,9 +71,9 @@ class ConnectAccessor(BaseAccessor[S, ConfigType]):
     ):
         super().__init__(store, name=name, config=config, config_type=config_type)
 
-        self._connect_lock = asyncio.Lock(loop=self.loop)
-        self._disconnect_lock = asyncio.Lock(loop=self.loop)
-        self._event = asyncio.Event(loop=self.loop)
+        self._connect_lock = asyncio.Lock()
+        self._disconnect_lock = asyncio.Lock()
+        self._event = asyncio.Event()
         self._connected = False
         self._connect_callbacks: Set[CallbackType] = set()
         self._disconnect_callbacks: Set[CallbackType] = set()
@@ -101,7 +100,7 @@ class ConnectAccessor(BaseAccessor[S, ConfigType]):
 
             self._connected = True
             self._event.set()
-            self.logger.info(f'Connected to {self.name} accessor')
+            self.logger.info(f"Connected to {self.name} accessor")
 
     async def disconnect(self):
         async with self._disconnect_lock:
@@ -119,7 +118,7 @@ class ConnectAccessor(BaseAccessor[S, ConfigType]):
 
             self._connected = False
             self._event.clear()
-            self.logger.info(f'Disconnected from {self.name} accessor')
+            self.logger.info(f"Disconnected from {self.name} accessor")
 
     async def _connect(self):
         pass

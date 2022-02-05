@@ -7,7 +7,7 @@ from proj.store import Store
 from proj.store.base.accessor import ConnectAccessor
 from proj.store.redis.config import ConfigType, RedisConfig
 
-__all__ = ('RedisAccessor',)
+__all__ = ("RedisAccessor",)
 
 
 class RedisAccessor(ConnectAccessor[Store, ConfigType]):
@@ -20,11 +20,9 @@ class RedisAccessor(ConnectAccessor[Store, ConfigType]):
         *,
         name: Optional[str] = None,
         config: Optional[Mapping] = None,
-        config_type: Type[ConfigType] = RedisConfig
+        config_type: Type[ConfigType] = RedisConfig,
     ) -> None:
-        super().__init__(
-            store, name=name, config=config, config_type=config_type
-        )
+        super().__init__(store, name=name, config=config, config_type=config_type)
 
         self._client: Optional[client.Redis] = None
 
@@ -37,7 +35,7 @@ class RedisAccessor(ConnectAccessor[Store, ConfigType]):
                 password=self.config.password,
                 db=self.config.db,
                 decode_responses=True,
-                encoding="utf-8"
+                encoding="utf-8",
             )
 
             try:
@@ -51,3 +49,7 @@ class RedisAccessor(ConnectAccessor[Store, ConfigType]):
 
     async def _disconnect(self) -> None:
         pass
+
+    @property
+    def client(self) -> client.Redis:
+        return self._client

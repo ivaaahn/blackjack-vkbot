@@ -1,9 +1,8 @@
 import asyncio
 import logging
 from collections import Mapping
-from typing import Optional
 
-from proj.store.base.accessor import BaseAccessor
+from proj.store.base.accessor import Accessor
 
 
 class BaseStore:
@@ -12,13 +11,10 @@ class BaseStore:
     def __init__(
         self,
         config: Mapping,
-        *,
-        loop: Optional[asyncio.AbstractEventLoop] = None,
     ):
-        self._loop = loop
-        self._logger = logging.getLogger('store')
+        self._logger = logging.getLogger("store")
         self._config = self.check_config(config) or {}
-        self._accessors: dict[str, BaseAccessor] = {}
+        self._accessors: dict[str, Accessor] = {}
 
     def __freeze__(self):
         self.__frozen__ = True
@@ -39,7 +35,7 @@ class BaseStore:
         return self._loop
 
     @property
-    def accessors(self) -> Mapping[str, BaseAccessor]:
+    def accessors(self) -> Mapping[str, Accessor]:
         return self._accessors
 
     def __getattribute__(self, item):
@@ -48,13 +44,13 @@ class BaseStore:
         except AttributeError:
             if item in self._accessors:
                 return self._accessors[item]
-            raise AttributeError(f'Accessor {item} not found')
+            raise AttributeError(f"Accessor {item} not found")
 
     def __setattr__(self, key, value):
         if self.__frozen__ and not hasattr(self, key):
-            if not isinstance(value, BaseAccessor):
+            if not isinstance(value, Accessor):
                 raise ValueError(
-                    f'Cannot set non-Accessor to store. Got: {repr(value)}'
+                    f"Cannot set non-Accessor to store. Got: {repr(value)}"
                 )
 
             self._accessors[key] = value
@@ -63,5 +59,3 @@ class BaseStore:
             return
 
         return object.__setattr__(self, key, value)
-
-

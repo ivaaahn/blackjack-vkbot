@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import TypeVar
 
-__all__ = ('RedisConfig',)
+__all__ = ("RedisConfig",)
 
 
 @dataclass
