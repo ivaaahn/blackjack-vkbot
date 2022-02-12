@@ -5,6 +5,11 @@ from ..states import States
 
 START_MSG = "/go"
 
+__all__ = (
+    "TriggerReceivedView",
+    "StartActionClickedView",
+)
+
 
 class TriggerReceivedView(BotView):
     async def execute(self):

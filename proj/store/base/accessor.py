@@ -2,11 +2,10 @@ import asyncio
 import inspect
 import logging
 import weakref
-from logging import getLogger
 from typing import Generic, Optional, Mapping, Type, Set, Callable, Awaitable
 
-from proj.services.app_logger import get_logger
-from proj.store.base import S, ConfigType
+from .store import S
+from proj.config import ConfigType
 
 CallbackType = Callable[[], Awaitable[None]]
 
@@ -29,7 +28,11 @@ class Accessor(Generic[S, ConfigType]):
         self._raw_config = config or store.config.get(self._name) or {}
 
         self._parse_config(config_type)
-        self._logger = get_logger(f"accessor.{self._name}")
+        self._logger = self.store.app.get_logger(f"Accessor.{self._name}")
+
+    @property
+    def app_conf(self) -> Mapping:
+        return self.store.app.config
 
     def _parse_config(self, config_type: Type[ConfigType]):
         try:
@@ -85,6 +88,8 @@ class ConnectAccessor(Accessor[S, ConfigType]):
         self._disconnect_callbacks.add(cb)
 
     async def connect(self):
+        self.logger.info(f"Connecting to {self.name} accessor...")
+
         async with self._connect_lock:
             if self._connected:
                 return
@@ -100,11 +105,15 @@ class ConnectAccessor(Accessor[S, ConfigType]):
 
             self._connected = True
             self._event.set()
+
             self.logger.info(f"Connected to {self.name} accessor")
 
     async def disconnect(self):
+        self.logger.info(f"Disconnecting from {self.name} accessor...")
+
         async with self._disconnect_lock:
             if not self._connected:
+                self.logger.debug("Already disconnected...")
                 return
 
             if inspect.iscoroutinefunction(self._disconnect):
@@ -118,6 +127,7 @@ class ConnectAccessor(Accessor[S, ConfigType]):
 
             self._connected = False
             self._event.clear()
+
             self.logger.info(f"Disconnected from {self.name} accessor")
 
     async def _connect(self):

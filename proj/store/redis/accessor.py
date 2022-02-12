@@ -3,20 +3,20 @@ from typing import Optional, Mapping, Type
 
 from aioredis import from_url, client
 
-from proj.store import Store
+from proj.store import CoreStore
 from proj.store.base.accessor import ConnectAccessor
 from proj.store.redis.config import ConfigType, RedisConfig
 
 __all__ = ("RedisAccessor",)
 
 
-class RedisAccessor(ConnectAccessor[Store, ConfigType]):
+class RedisAccessor(ConnectAccessor[CoreStore, ConfigType]):
     class Meta:
         name = "redis"
 
     def __init__(
         self,
-        store: Store,
+        store: CoreStore,
         *,
         name: Optional[str] = None,
         config: Optional[Mapping] = None,
@@ -32,7 +32,7 @@ class RedisAccessor(ConnectAccessor[Store, ConfigType]):
                 url=f"redis://{self.config.host}",
                 port=self.config.port,
                 # username=cfg.user,
-                password=self.config.password,
+                # password=self.config.password,
                 db=self.config.db,
                 decode_responses=True,
                 encoding="utf-8",

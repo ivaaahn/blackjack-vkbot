@@ -1,19 +1,15 @@
+import logging
 import typing
-
-from logging import getLogger
 from typing import Type, Optional
-from proj.store import Store
-from ...services.app_logger import get_logger
+
 
 if typing.TYPE_CHECKING:
+    from proj.store import CoreStore
     from ..context import FSMGameCtxProxy
     from ..states import State
-    from ..views import BotView
+    from ..views.base import BotView
 
 __all__ = ("StateResolverMiddleware",)
-
-
-logger = get_logger(__name__)
 
 
 class StateResolverMiddleware:
@@ -31,7 +27,9 @@ class StateResolverMiddleware:
         return cls._STATE_VIEW.get(state)
 
     @classmethod
-    async def exec(cls, state: "State", store: Store, context: "FSMGameCtxProxy"):
+    async def exec(cls, state: "State", store: "CoreStore", context: "FSMGameCtxProxy"):
+        logger = store.app.get_logger("StateResolverMiddleware")
+
         if not (View := cls._resolve(state)):  # TODO testing
             logger.error(f"State {state.state_id} cannot be resolved")
             raise NotImplementedError  # TODO своя ошибка и убрать логирование здесь
@@ -40,4 +38,9 @@ class StateResolverMiddleware:
 
     @classmethod
     def state_by_id(cls, _id: int) -> "State":
-        return cls._STATE_INSTANCE[_id]
+        state = cls._STATE_INSTANCE.get(_id)
+
+        if not state:
+            return cls._STATE_INSTANCE[0]
+
+        return state

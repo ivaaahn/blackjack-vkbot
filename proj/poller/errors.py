@@ -1,0 +1,2 @@
+class PollerError(Exception):
+    pass

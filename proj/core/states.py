@@ -1,10 +1,4 @@
-from logging import getLogger
-
 __all__ = ("States",)
-
-from proj.services.app_logger import get_logger
-
-logger = get_logger(__name__)
 
 
 class State:
@@ -22,6 +16,7 @@ class State:
 
     def __hash__(self) -> int:
         return self.state_id
+
     #
     # @property
     # def handler(self) -> Callable[["FSMGameCtxProxy", "GAccessors"], None]:

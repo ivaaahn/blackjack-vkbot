@@ -1,7 +1,7 @@
 from datetime import timedelta as td
 
-from proj.services.api.players.models import PlayerModel, PlayerStats
-from proj.store import Store
+from proj.api.players.models import PlayerModel, PlayerStats
+from proj.store import CoreStore
 from proj.store.base.accessor import Accessor
 
 from proj.store.vk.dataclasses import Message
@@ -20,8 +20,8 @@ from ..game import (
 __all__ = ("GameInteractionAccessor",)
 
 
-class GameInteractionAccessor(Accessor[Store, None]):
-    def __init__(self, store: Store, **kwargs):
+class GameInteractionAccessor(Accessor[CoreStore, None]):
+    def __init__(self, store: CoreStore, **kwargs):
         super().__init__(store, **kwargs)
 
     async def send(

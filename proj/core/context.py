@@ -30,7 +30,9 @@ class FSMGameCtx:
     async def get_state(self, default: Optional[int] = None) -> Optional[State]:
         state_id = await self._accessor.get_state(chat=self.chat, default=default)
         return (
-            default if state_id is None else StateResolverMiddleware.state_by_id(state_id)
+            default
+            if state_id is None
+            else StateResolverMiddleware.state_by_id(state_id)
         )
 
     async def get_game(self, default: Optional[dict] = None) -> Optional[BlackJackGame]:
@@ -82,10 +84,11 @@ class FSMGameCtxProxy:
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         if exc_type is None:
             await self.save()
+            self._closed = True
+            return
 
+        raise Exception("SHIT")
         # TODO: raise exception
-
-        self._closed = True
 
     @property
     def chat_id(self) -> int:

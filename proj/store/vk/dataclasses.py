@@ -52,13 +52,34 @@ class UpdateMessage:
     id: int
     payload: Optional[str]
 
+    @classmethod
+    def from_dict(cls, d: dict) -> "UpdateMessage":
+        return cls(
+            from_id=d["from_id"],
+            text=d["text"],
+            id=d["id"],
+            peer_id=d["peer_id"],
+            payload=d.get("payload"),
+        )
+
 
 @dataclass
 class UpdateObject:
     message: UpdateMessage
+
+    @classmethod
+    def from_dict(cls, d: dict) -> "UpdateObject":
+        return cls(message=UpdateMessage.from_dict(d["message"]))
 
 
 @dataclass
 class Update:
     type: str
     object: UpdateObject
+
+    @classmethod
+    def from_dict(cls, d: dict) -> "Update":
+        return cls(
+            type=d["type"],
+            object=UpdateObject.from_dict(d["object"]),
+        )

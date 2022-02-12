@@ -3,7 +3,8 @@ from typing import Optional
 
 from .deck import Card
 
-__all__ = ('Player', )
+__all__ = ("Player",)
+
 
 class PlayerStatus(str, Enum):
     DEFEAT = "Проигрыш"

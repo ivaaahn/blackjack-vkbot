@@ -1,11 +1,12 @@
+import abc
 from abc import abstractmethod
 from typing import Optional
 
-from proj.store import Store
+from proj.store import CoreStore
 from proj.store.base.accessor import Accessor
 
 
-class BaseGameAccessor(Accessor[Store, None]):
+class BaseGameAccessor(Accessor[CoreStore, None], metaclass=abc.ABCMeta):
     @abstractmethod
     async def set_state(self, chat: int, state: int) -> None:
         pass

@@ -8,7 +8,7 @@ from motor.motor_asyncio import (
     AsyncIOMotorCollection,
 )
 
-from proj.store import Store
+from proj.store import BaseStore
 from proj.store.base.accessor import ConnectAccessor
 from proj.store.mongo.config import ConfigType, MongoConfig, MongoCollectionsConfig
 
@@ -25,13 +25,13 @@ class MongoCollections:
     game_settings: Optional[AsyncIOMotorCollection] = None
 
 
-class MongoAccessor(ConnectAccessor[Store, ConfigType]):
+class MongoAccessor(ConnectAccessor[BaseStore, ConfigType]):
     class Meta:
         name = "mongo"
 
     def __init__(
         self,
-        store: Store,
+        store: BaseStore,
         *,
         name: Optional[str] = None,
         config: Optional[Mapping] = None,

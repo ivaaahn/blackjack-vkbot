@@ -1,7 +1,7 @@
 import typing
 from typing import Generic, TypeVar, Generator, Any, Optional
 
-from proj.store import Store
+from proj.store import CoreStore
 from proj.store.base import S
 from proj.store.vk.keyboards import Keyboard, Keyboards
 from ..game import BlackJackGame
@@ -32,8 +32,8 @@ class AbstractBotView(Generic[S, ContextProxy]):
         pass
 
 
-class BotView(AbstractBotView[Store, "FSMGameCtxProxy"]):
-    def __init__(self, store: Store, context: "FSMGameCtxProxy") -> None:
+class BotView(AbstractBotView[CoreStore, "FSMGameCtxProxy"]):
+    def __init__(self, store: CoreStore, context: "FSMGameCtxProxy") -> None:
         super().__init__(store, context)
 
     async def execute(self) -> Optional["State"]:
