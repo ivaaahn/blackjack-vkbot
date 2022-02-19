@@ -3,6 +3,12 @@ from abc import ABCMeta, abstractmethod
 from enum import Enum
 from typing import Optional
 
+from proj.core.types import (
+    StartActionChoiceType,
+    MainActionChoiceType,
+    LastActionChoiceType,
+)
+
 
 class ButtonColor(str, Enum):
     PRIMARY = ("primary",)
@@ -82,42 +88,42 @@ class Keyboards:
                 TextButton(
                     label="Начать игру",
                     color=ButtonColor.POSITIVE,
-                    payload='{"button": "new_game"}',
+                    payload=f'{"button": "{StartActionChoiceType.new_game}"}',
                 ),
             ],
             [
                 TextButton(
                     label="Забрать бонус",
                     color=ButtonColor.PRIMARY,
-                    payload='{"button": "bonus"}',
+                    payload=f'{"button": "{StartActionChoiceType.get_bonus}"}',
                 ),
             ],
             [
                 TextButton(
                     label="Проверить счёт",
                     color=ButtonColor.PRIMARY,
-                    payload='{"button": "balance"}',
+                    payload=f'{"button": "{StartActionChoiceType.show_balance}"}',
                 ),
             ],
             [
                 TextButton(
                     label="Статистика",
                     color=ButtonColor.PRIMARY,
-                    payload='{"button": "stat"}',
+                    payload=f'{"button": "{StartActionChoiceType.common_statistic}"}',
                 ),
             ],
             [
                 TextButton(
                     label="Моя статистика",
                     color=ButtonColor.PRIMARY,
-                    payload='{"button": "pers_stat"}',
+                    payload=f'{"button": "{StartActionChoiceType.personal_statistic}"}',
                 ),
             ],
             [
                 TextButton(
                     label="Выход",
                     color=ButtonColor.NEGATIVE,
-                    payload='{"button": "cancel"}',
+                    payload=f'{"button": "{StartActionChoiceType.cancel}"}',
                 ),
             ],
         ],
@@ -154,7 +160,7 @@ class Keyboards:
                 TextButton(
                     label="Забрать 1 к 1",
                     color=ButtonColor.NEGATIVE,
-                    payload='{"button": "pick up 11"}',
+                    payload=f'{"button": "{MainActionChoiceType.blackjack_pickup11}"}',
                 ),
                 TextButton(
                     label="Дождаться конца игры",
@@ -185,7 +191,7 @@ class Keyboards:
                 TextButton(
                     label="Забрать 3 к 2",
                     color=ButtonColor.NEGATIVE,
-                    payload='{"button": "pick up 32"}',
+                    payload=f'{"button": "{MainActionChoiceType.blackjack_pickup32}"}',
                 ),
             ],
         ],
@@ -249,12 +255,14 @@ class Keyboards:
         buttons=[
             [
                 TextButton(
-                    label="Ещё", color=ButtonColor.POSITIVE, payload='{"button": "hit"}'
+                    label="Ещё",
+                    color=ButtonColor.POSITIVE,
+                    payload=f'{"button": "{MainActionChoiceType.hit}"}',
                 ),
                 TextButton(
                     label="Хватит",
                     color=ButtonColor.NEGATIVE,
-                    payload='{"button": "stand"}',
+                    payload=f'{"button": "{MainActionChoiceType.stand}"}',
                 ),
             ],
         ],
@@ -267,12 +275,12 @@ class Keyboards:
                 TextButton(
                     label="Играем еще",
                     color=ButtonColor.POSITIVE,
-                    payload='{"button": "again"}',
+                    payload=f'{"button": "{LastActionChoiceType.repeat_game}"}',
                 ),
                 TextButton(
                     label="Больше не играем",
                     color=ButtonColor.NEGATIVE,
-                    payload='{"button": "stop"}',
+                    payload=f'{"button": "{LastActionChoiceType.end_game}"}',
                 ),
             ],
         ],

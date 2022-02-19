@@ -10,7 +10,8 @@ from proj.store.vk.keyboards import Keyboard, Keyboards
 from ..states import States
 from ..context import FSMGameCtxProxy
 
-from ..misc import pretty_time_delta, Choices, parse_bet_expr
+from ..misc import pretty_time_delta, parse_bet_expr
+from ..types import MainActionChoiceType, StartActionChoiceType, LastActionChoiceType
 from ..game import (
     BlackJackGame,
     Player,
@@ -27,25 +28,25 @@ class GameInteractionAccessor(Accessor[CoreStore, None]):
         super().__init__(store, **kwargs)
 
         self._start_actions_matching = {
-            "new_game": self._handle_new_game,
-            "bonus": self._handle_bonus,
-            "balance": self._handle_balance,
-            "stat": self._handle_statistic,
-            "pers_stat": self._handle_pers_statistic,
-            "cancel": self._do_cancel,
+            StartActionChoiceType.new_game: self._handle_new_game,
+            StartActionChoiceType.get_bonus: self._handle_bonus,
+            StartActionChoiceType.show_balance: self._handle_balance,
+            StartActionChoiceType.common_statistic: self._handle_statistic,
+            StartActionChoiceType.personal_statistic: self._handle_pers_statistic,
+            StartActionChoiceType.cancel: self._do_cancel,
         }
 
         self._main_actions_matching = {
-            Choices.HIT: self._handle_hit_action,
-            Choices.STAND: self._handle_stand_action,
-            Choices.BJ_WAIT: self._handle_bj_wait_action,
-            Choices.BJ_PICK_UP11: self.handle_bj_pick_up11_action,
-            Choices.BJ_PICK_UP32: self._handle_bj_pick_up32_action,
+            MainActionChoiceType.hit: self._handle_hit_action,
+            MainActionChoiceType.stand: self._handle_stand_action,
+            MainActionChoiceType.blackjack_wait_for: self._handle_bj_wait_action,
+            MainActionChoiceType.blackjack_pickup11: self.handle_bj_pick_up11_action,
+            MainActionChoiceType.blackjack_pickup32: self._handle_bj_pick_up32_action,
         }
 
         self._last_actions_matching = {
-            "stop": self._end_game,
-            "again": self._repeat_game,
+            LastActionChoiceType.end_game: self._end_game,
+            LastActionChoiceType.repeat_game: self._repeat_game,
         }
 
     async def handle_trigger(self, context: FSMGameCtxProxy):
@@ -54,8 +55,8 @@ class GameInteractionAccessor(Accessor[CoreStore, None]):
 
         context.state = States.WAITING_FOR_START_CHOICE
 
-    async def handle_start_action(self, choice: str, context: FSMGameCtxProxy):
-        action_handler = self._start_actions_matching[choice]
+    async def handle_start_action(self, payload: str, context: FSMGameCtxProxy):
+        action_handler = self._start_actions_matching[StartActionChoiceType(payload)]
         await action_handler(context)
 
     async def handle_player_registration(self, context: FSMGameCtxProxy):
@@ -80,7 +81,7 @@ class GameInteractionAccessor(Accessor[CoreStore, None]):
 
     async def handle_main_action(self, context: FSMGameCtxProxy, payload: str):
         try:
-            choice = Choices(payload)
+            choice = MainActionChoiceType(payload)
         except ValueError:
             return
 
@@ -93,7 +94,7 @@ class GameInteractionAccessor(Accessor[CoreStore, None]):
 
     async def handle_last_action(self, context: FSMGameCtxProxy, payload: str):
         try:
-            action_handler = self._last_actions_matching[payload]
+            action_handler = self._last_actions_matching[LastActionChoiceType(payload)]
         except KeyError:
             self.logger.error("Bad payload")
         else:
@@ -341,7 +342,9 @@ class GameInteractionAccessor(Accessor[CoreStore, None]):
     async def _handle_bj_pick_up32_action(_: FSMGameCtxProxy, __: Player) -> bool:
         return True
 
-    async def _handle_bj_wait_action(self, ctx: FSMGameCtxProxy, player: Player) -> bool:
+    async def _handle_bj_wait_action(
+        self, ctx: FSMGameCtxProxy, player: Player
+    ) -> bool:
         player.set_bj_waiting_for_end_status()
         answer = f"{player}, ожидай конца игры!"
         await self._send(ctx, answer)
@@ -378,14 +381,14 @@ class GameInteractionAccessor(Accessor[CoreStore, None]):
         self,
         ctx: FSMGameCtxProxy,
         player: Player,
-        choice: Choices,
+        choice: MainActionChoiceType,
         action_res: bool,
     ) -> None:
-        if choice is Choices.HIT and action_res and player.score != 21:
+        if choice is MainActionChoiceType.hit and action_res and player.score != 21:
             await self._base_ask_player(ctx)
             return
 
-        if choice is Choices.HIT and not action_res:
+        if choice is MainActionChoiceType.hit and not action_res:
             await self._handle_player_bust(ctx, player)
 
         if ctx.game.next_player():

@@ -12,14 +12,6 @@ class CheckType(Enum):
     IN = 1
 
 
-class Choices(str, Enum):
-    HIT = "hit"
-    STAND = "stand"
-    BJ_PICK_UP11 = "pick up 11"
-    BJ_PICK_UP32 = "pick up 32"
-    BJ_WAIT = "wait"
-
-
 def get_username_by_id(user_id: int, chat: dict) -> str:
     return [
         p["first_name"] for p in chat["response"]["profiles"] if p["id"] == user_id
