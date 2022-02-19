@@ -13,16 +13,14 @@ class GameRequestReceiver(RabbitMQWorker):
     @staticmethod
     def _extract_updates(
         msg: IncomingMessage,
-    ) -> Optional[dict]:  # TODO None или же тут {}
-        return json.loads(msg.body.decode(encoding="utf-8"))[
-            "updates"
-        ]  # TODO мб тут класть в rmq сразу апдейты?
+    ) -> Optional[list[dict]]:
+        return json.loads(msg.body.decode(encoding="utf-8"))
 
     async def handler(self, msg: IncomingMessage):
         updates = self._extract_updates(msg)
 
         if updates:
-            self.logger.debug(f"Updates: {updates}")
+            self.logger.debug(f"{updates=}")
             await self._handle_updates(self._pack_updates(updates))
 
     async def _handle_updates(self, updates: list[Update]) -> None:
@@ -40,7 +38,7 @@ class GameRequestReceiver(RabbitMQWorker):
             await ErrorHandlerMiddleware.exec(ctx.state, self.store, ctx)
 
     @staticmethod
-    def _pack_updates(updates: dict) -> list[Update]:
+    def _pack_updates(updates: list[dict]) -> list[Update]:
         return [
             Update.from_dict(u)
             for u in updates

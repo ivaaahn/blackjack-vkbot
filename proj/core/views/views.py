@@ -29,7 +29,9 @@ class TriggerReceivedView(BotView):
 
 class StartActionClickedView(BotView):
     async def execute(self):
-        if (payload := get_payload(self.ctx.msg)) is None:
+        self.logger.debug(f"{self.button_payload}")
+
+        if not self.button_payload:
             return
 
         choose = {
@@ -41,23 +43,23 @@ class StartActionClickedView(BotView):
             "cancel": lambda: self.interact.do_cancel(self.ctx),
         }
 
-        await choose[payload]()
+        await choose[self.button_payload]()
 
 
 class PlayersAmountClickedView(BotView):
     async def execute(self):
-        if (payload := get_payload(self.ctx.msg)) is None:
+        if not self.button_payload:
             return
 
-        if payload == "cancel":
+        if self.button_payload == "cancel":
             await self.interact.do_cancel(self.ctx)
             return
 
-        if payload not in "123":
+        if self.button_payload not in "123":
             return
 
-        await self.interact.hide_keyboard(self.ctx, f"Количество игроков: {payload}")
-        await self.interact.init_game(self.ctx, int(payload))
+        await self.interact.hide_keyboard(self.ctx, f"Количество игроков: {self.button_payload}")
+        await self.interact.init_game(self.ctx, int(self.button_payload))
 
         answer = (
             "Отлично! Чтобы зарегистрироваться на игру, желающие должны нажать кнопку:"
@@ -69,14 +71,14 @@ class PlayersAmountClickedView(BotView):
 
 class RegistrationClicked(BotView):
     async def execute(self) -> None:
-        if (payload := get_payload(self.ctx.msg)) is None:
+        if not self.button_payload:
             return
 
-        if payload == "cancel":
+        if self.button_payload == "cancel":
             await self.interact.do_cancel(self.ctx)
             return
 
-        if payload != "register":
+        if self.button_payload != "register":
             return
 
         await self.interact.player_in_game(self.ctx)
@@ -91,7 +93,7 @@ class BetReceived(BotView):
         if (player := self.game.get_player_by_id(self.ctx.msg.from_id)) is None:
             return
 
-        if get_payload(self.ctx.msg) == "get out":
+        if self.button_payload == "get out":
             await self.send(f"{player}, вы покидаете игру")
             self.game.drop_player(player)
             if not self.game.players:
@@ -128,7 +130,7 @@ class ActionClicked(BotView):
         }
 
         try:
-            choice = Choices(get_payload(self.ctx.msg))
+            choice = Choices(self.button_payload)
         except ValueError:
             return
 
@@ -139,10 +141,7 @@ class ActionClicked(BotView):
 
 class LastActionClicked(BotView):
     async def execute(self) -> None:
-        self.logger.debug("IN")
-
-        self.logger.debug("GONNA GETTING PAYLOAD")
-        if (payload := get_payload(self.ctx.msg)) is None:
+        if not self.button_payload:
             return
 
         if self.ctx.msg.from_id not in self.game.players_ids:
@@ -154,6 +153,6 @@ class LastActionClicked(BotView):
         }
 
         try:
-            await actions[payload]()
+            await actions[self.button_payload]()
         except KeyError:
-            print("Bad payload")
+            self.logger.error("Bad payload")

@@ -33,7 +33,7 @@ class StateResolverMiddleware:
             logger.error(f"State {state.state_id} cannot be resolved")
             raise NotImplementedError  # TODO своя ошибка и убрать логирование здесь
 
-        await View(store, context).execute()
+        await View(store, context)
 
     @classmethod
     def state_by_id(cls, _id: int) -> "State":

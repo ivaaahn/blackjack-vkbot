@@ -54,7 +54,7 @@ class RabbitMQSender(ConnectAccessor[BaseStore, ConfigType]):
                 )
                 await asyncio.sleep(self.config.reconnect_timeout)
 
-    async def put(self, data: dict):
+    async def put(self, data: list[dict]):
         await self._channel.default_exchange.publish(
             routing_key=self.config.queue_name,
             message=RMQMessage(

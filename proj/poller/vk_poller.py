@@ -1,5 +1,6 @@
 import asyncio
-from typing import Optional, Mapping, Type
+from typing import Optional, Mapping, Type, Tuple
+from pprint import pformat
 
 from .base import AbstractPoller
 from ..config import ConfigType
@@ -24,17 +25,22 @@ class VkPoller(AbstractPoller[VkAccessor]):
             store, VkAccessor(store), name=name, config=config, config_type=config_type
         )
 
+    @staticmethod
+    def _extract_updates(updates: dict) -> tuple[Optional[str], list[dict]]:
+        if not updates:
+            return None, []
+
+        return updates.get("ts", None), updates.get("updates", [])
+
     async def _poll(self):
         await super()._poll()
 
         while self._is_running:
-            if updates := await self.api.poll():
-                self._logger.debug(f"Updates: {updates}")
+            if not (updates := await self.api.poll()):
+                continue
+
+            ts, updates = self._extract_updates(updates)
+
+            if updates:
+                self.logger.debug(f"{ts=}, {updates=}")
                 await self.store.rmq_sender.put(updates)
-                #
-                # upd = updates['updates'][0]
-                # self.logger.debug(f'{upd}')
-                #
-                # msg = Update.from_dict(upd).object.message
-                #
-                # await self.api.send_message(Message(peer_id=msg.peer_id, text="Hello"))

@@ -1,3 +1,4 @@
+import json
 import logging
 import typing
 from typing import Generic, TypeVar, Generator, Any, Optional
@@ -8,6 +9,7 @@ from proj.store.vk.keyboards import Keyboard, Keyboards
 from ..game import BlackJackGame
 
 if typing.TYPE_CHECKING:
+    from proj.store.vk.dataclasses import UpdateMessage
     from ..accessors import GameInteractionAccessor
     from ..context import FSMGameCtxProxy
     from ..states import State
@@ -18,7 +20,7 @@ ContextProxy = TypeVar("ContextProxy")
 
 class AbstractBotView(Generic[S, ContextProxy]):
     class Meta:
-        name = "abstract"
+        name = None
 
     def __init__(self, store: S, context: ContextProxy) -> None:
         self._store = store
@@ -41,6 +43,11 @@ class BotView(AbstractBotView[CoreStore, "FSMGameCtxProxy"]):
         super().__init__(store, context)
         self._name = self.Meta.name or self.__class__.__name__
         self._logger = store.app.get_logger(f"View {self._name}")
+        self._btn_payload: Optional[str] = None
+
+    @property
+    def button_payload(self) -> str:
+        return self._btn_payload
 
     @property
     def logger(self) -> logging.Logger:
@@ -49,8 +56,19 @@ class BotView(AbstractBotView[CoreStore, "FSMGameCtxProxy"]):
     async def execute(self) -> Optional["State"]:
         pass
 
+    @staticmethod
+    def _get_payload(msg: "UpdateMessage", key: str) -> Optional[str]:
+        if msg.payload is None:
+            return None
+
+        payload_json = json.loads(msg.payload)
+        return payload_json.get(key)
+
+    def _get_btn_payload(self) -> None:
+        self._btn_payload = self._get_payload(self.ctx.msg, "button")
+
     async def pre_handle(self):
-        pass
+        self._get_btn_payload()
 
     async def post_handle(self, next_state: Optional["State"]):
         pass
@@ -87,3 +105,5 @@ class BotView(AbstractBotView[CoreStore, "FSMGameCtxProxy"]):
     @property
     def game(self) -> BlackJackGame:
         return self.ctx.game
+
+

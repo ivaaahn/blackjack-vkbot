@@ -17,7 +17,12 @@ class State:
     def __hash__(self) -> int:
         return self.state_id
 
+    def __str__(self) -> str:
+        return f"State #{self._id}"
+
     #
+
+
     # @property
     # def handler(self) -> Callable[["FSMGameCtxProxy", "GAccessors"], None]:
     #     return self._handler
