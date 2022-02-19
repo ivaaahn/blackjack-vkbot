@@ -28,21 +28,6 @@ class CoreApplication(BaseApplication[CoreStore]):
 
         setup_routes()
 
-    #     self.on_startup.append(self.worker_connect)
-    #     self.on_shutdown.append(self.worker_disconnect)
-    #
-    # async def worker_connect(self) -> None:
-    #     self.logger.info("Connecting to worker...")
-    #     self._worker = self.make_worker()
-    #     await self._worker.start()
-    #
-    # async def worker_disconnect(self) -> None:
-    #     self.logger.info("Disconnecting from worker...")
-    #     await self._worker.stop()
-
-    # def make_worker(self) -> Worker:
-    #     return Worker(self.store)
-
     def make_store(self) -> CoreStore:
         return CoreStore(self, config=self.config["store"])
 
