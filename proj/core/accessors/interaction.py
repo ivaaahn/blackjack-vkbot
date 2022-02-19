@@ -19,10 +19,21 @@ from ..game import (
 
 __all__ = ("GameInteractionAccessor",)
 
+from ..views.base import ContextProxy
+
 
 class GameInteractionAccessor(Accessor[CoreStore, None]):
     def __init__(self, store: CoreStore, **kwargs):
         super().__init__(store, **kwargs)
+
+        self._start_actions_matching = {
+            "new_game": self._handle_new_game,
+            "bonus": self._handle_bonus,
+            "balance": self._handle_balance,
+            "stat": self._handle_statistic,
+            "pers_stat": self._handle_pers_statistic,
+            "cancel": self._do_cancel,
+        }
 
     async def send(
         self,
@@ -35,13 +46,24 @@ class GameInteractionAccessor(Accessor[CoreStore, None]):
             Message(peer_id=ctx.msg.peer_id, text=txt, kbd=kbd, photos=photos)
         )
 
-    async def handle_new_game(self, ctx: FSMGameCtxProxy) -> None:
+    async def handle_player_registration(self, context: FSMGameCtxProxy):
+        await self._add_player_in_game(context)
+
+        if context.game.all_players_registered:
+            await self._complete_registration(context)
+            context.state = States.WAITING_FOR_BETS
+
+    async def handle_start_action(self, choice: str, context: FSMGameCtxProxy):
+        handler = self._start_actions_matching[choice]
+        await handler(context)
+
+    async def _handle_new_game(self, ctx: FSMGameCtxProxy) -> None:
         answer = "Выберите количество игроков"
         await self.send(ctx, answer, Keyboards.NUMBER_OF_PLAYERS)
 
         ctx.state = States.WAITING_FOR_PLAYERS_AMOUNT
 
-    async def handle_balance(self, ctx: FSMGameCtxProxy) -> None:
+    async def _handle_balance(self, ctx: FSMGameCtxProxy) -> None:
         sets = await self.store.game_settings.get(_id=0)
 
         created, player = await self.fetch_user_info(ctx, sets.start_cash)
@@ -51,7 +73,7 @@ class GameInteractionAccessor(Accessor[CoreStore, None]):
 
         ctx.state = States.WAITING_FOR_START_CHOICE
 
-    async def handle_statistic(self, ctx: FSMGameCtxProxy) -> None:
+    async def _handle_statistic(self, ctx: FSMGameCtxProxy) -> None:
         limit, offset = 10, 0
         order_by, order_type = "cash", -1
 
@@ -71,6 +93,22 @@ class GameInteractionAccessor(Accessor[CoreStore, None]):
 
         ctx.state = States.WAITING_FOR_START_CHOICE
 
+    async def handle_receiving_players_amount(
+        self, choice: str, context: FSMGameCtxProxy
+    ):
+        if choice not in "123":
+            return
+
+        await self.hide_keyboard(context, f"Количество игроков: {choice}")
+        await self._init_game(context, int(choice))
+
+        answer = (
+            "Отлично! Чтобы зарегистрироваться на игру, желающие должны нажать кнопку:"
+        )
+        await self.send(context, answer, Keyboards.CONFIRM)
+
+        context.state = States.WAITING_FOR_REGISTRATION
+
     async def personal_player_statistic(
         self, ctx: FSMGameCtxProxy, p: PlayerModel
     ) -> str:
@@ -83,7 +121,7 @@ class GameInteractionAccessor(Accessor[CoreStore, None]):
             {p.stats}
             """
 
-    async def handle_pers_statistic(self, ctx: FSMGameCtxProxy) -> None:
+    async def _handle_pers_statistic(self, ctx: FSMGameCtxProxy) -> None:
         sets = await self.store.game_settings.get(_id=0)
         created, player = await self.fetch_user_info(ctx, sets.start_cash)
 
@@ -95,7 +133,7 @@ class GameInteractionAccessor(Accessor[CoreStore, None]):
 
         ctx.state = States.WAITING_FOR_START_CHOICE
 
-    async def handle_bonus(self, ctx: FSMGameCtxProxy) -> None:
+    async def _handle_bonus(self, ctx: FSMGameCtxProxy) -> None:
         sets = await self.store.game_settings.get(_id=0)
         created, player = await self.fetch_user_info(ctx, sets.start_cash)
 
@@ -142,7 +180,7 @@ class GameInteractionAccessor(Accessor[CoreStore, None]):
             chat_id=ctx.chat_id, vk_id=ctx.msg.from_id
         )
 
-    async def complete_registration(self, ctx: FSMGameCtxProxy) -> None:
+    async def _complete_registration(self, ctx: FSMGameCtxProxy) -> None:
         answer = f"""
             Все игроки зарегистрированы. %0A
             Укажите сумму ставки без пробелов.%0A%0A
@@ -316,7 +354,7 @@ class GameInteractionAccessor(Accessor[CoreStore, None]):
         """
         await self.send(ctx, answer, Keyboards.REPEAT_GAME_QUESTION)
 
-    async def init_game(self, ctx: FSMGameCtxProxy, num_of_players: int) -> None:
+    async def _init_game(self, ctx: FSMGameCtxProxy, num_of_players: int) -> None:
         sets = await self.store.game_settings.get(_id=0)
         ctx.game = BlackJackGame(
             chat_id=ctx.msg.peer_id,
@@ -326,7 +364,7 @@ class GameInteractionAccessor(Accessor[CoreStore, None]):
             decks_qty=sets.num_of_decks,
         )
 
-    async def player_in_game(self, ctx: FSMGameCtxProxy) -> None:
+    async def _add_player_in_game(self, ctx: FSMGameCtxProxy) -> None:
         sets = await self.store.game_settings.get(_id=0)
         _, db_player_data = await self.fetch_user_info(ctx, sets.start_cash)
         new_player = Player(
@@ -414,7 +452,7 @@ class GameInteractionAccessor(Accessor[CoreStore, None]):
         await self.hide_keyboard(ctx, "Ой, что-то пошло не так :(")
         await self.do_end(ctx)
 
-    async def do_cancel(self, ctx: FSMGameCtxProxy) -> None:
+    async def _do_cancel(self, ctx: FSMGameCtxProxy) -> None:
         await self.hide_keyboard(ctx, "Отмена игры")
         await self.do_end(ctx)
 

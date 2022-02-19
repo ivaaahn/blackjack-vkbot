@@ -22,7 +22,6 @@ class State:
 
     #
 
-
     # @property
     # def handler(self) -> Callable[["FSMGameCtxProxy", "GAccessors"], None]:
     #     return self._handler

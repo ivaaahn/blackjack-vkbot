@@ -9,8 +9,8 @@ __all__ = (
     "TriggerReceivedView",
     "StartActionClickedView",
     "PlayersAmountClickedView",
-    "RegistrationClicked",
-    "BetReceived",
+    "RegistrationClickedView",
+    "BetReceivedView",
     "ActionClicked",
     "LastActionClicked",
 )
@@ -29,78 +29,42 @@ class TriggerReceivedView(BotView):
 
 class StartActionClickedView(BotView):
     async def execute(self):
-        self.logger.debug(f"{self.button_payload}")
-
-        if not self.button_payload:
-            return
-
-        choose = {
-            "new_game": lambda: self.interact.handle_new_game(self.ctx),
-            "bonus": lambda: self.interact.handle_bonus(self.ctx),
-            "balance": lambda: self.interact.handle_balance(self.ctx),
-            "stat": lambda: self.interact.handle_statistic(self.ctx),
-            "pers_stat": lambda: self.interact.handle_pers_statistic(self.ctx),
-            "cancel": lambda: self.interact.do_cancel(self.ctx),
-        }
-
-        await choose[self.button_payload]()
+        if self.button_payload:
+            await self.interact.handle_start_action(self.button_payload, self.ctx)
 
 
 class PlayersAmountClickedView(BotView):
     async def execute(self):
-        if not self.button_payload:
-            return
+        if self.button_payload:
+            await self.interact.handle_receiving_players_amount(
+                self.button_payload, self.ctx
+            )
 
-        if self.button_payload == "cancel":
-            await self.interact.do_cancel(self.ctx)
-            return
 
-        if self.button_payload not in "123":
-            return
+class RegistrationClickedView(BotView):
+    async def execute(self) -> None:
+        if self.button_payload == "register":
+            await self.interact.handle_player_registration(self.ctx)
 
-        await self.interact.hide_keyboard(self.ctx, f"Количество игроков: {self.button_payload}")
-        await self.interact.init_game(self.ctx, int(self.button_payload))
 
-        answer = (
-            "Отлично! Чтобы зарегистрироваться на игру, желающие должны нажать кнопку:"
+class BetReceivedView(BotView):
+    async def execute(self) -> None:
+        curr_player = self.game.get_player_by_id(
+            vk_id=self.ctx.msg.from_id
         )
-        await self.send(answer, Keyboards.CONFIRM)
 
-        self.ctx.state = States.WAITING_FOR_REGISTRATION
-
-
-class RegistrationClicked(BotView):
-    async def execute(self) -> None:
-        if not self.button_payload:
-            return
-
-        if self.button_payload == "cancel":
-            await self.interact.do_cancel(self.ctx)
-            return
-
-        if self.button_payload != "register":
-            return
-
-        await self.interact.player_in_game(self.ctx)
-
-        if self.game.all_players_registered:
-            await self.interact.complete_registration(self.ctx)
-            self.ctx.state = States.WAITING_FOR_BETS
-
-
-class BetReceived(BotView):
-    async def execute(self) -> None:
-        if (player := self.game.get_player_by_id(self.ctx.msg.from_id)) is None:
+        if not curr_player:
             return
 
         if self.button_payload == "get out":
-            await self.send(f"{player}, вы покидаете игру")
-            self.game.drop_player(player)
+            await self.send(f"{curr_player}, вы покидаете игру")
+            self.game.drop_player(curr_player)
+
             if not self.game.players:
-                await self.interact.do_cancel(self.ctx)
+                await self.interact._do_cancel(self.ctx)
                 return
         else:
-            await self.interact.place_bet(self.ctx, player)
+            await self.interact.place_bet(self.ctx, curr_player)
 
         if self.game.all_players_bet:
             await self.interact.hand_out_cards(self.ctx)
@@ -149,7 +113,7 @@ class LastActionClicked(BotView):
 
         actions = {
             "stop": lambda: self.interact.end_game(self.ctx),
-            "again": lambda: self.interact.repeat_game  (self.ctx),
+            "again": lambda: self.interact.repeat_game(self.ctx),
         }
 
         try:

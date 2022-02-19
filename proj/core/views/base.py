@@ -67,6 +67,13 @@ class BotView(AbstractBotView[CoreStore, "FSMGameCtxProxy"]):
     def _get_btn_payload(self) -> None:
         self._btn_payload = self._get_payload(self.ctx.msg, "button")
 
+    def _handle_cancel(self) -> bool:
+        if self.button_payload == "cancel":
+            await self.interact._do_cancel(self.ctx)
+            return True
+
+        return False
+
     async def pre_handle(self):
         self._get_btn_payload()
 
@@ -76,8 +83,10 @@ class BotView(AbstractBotView[CoreStore, "FSMGameCtxProxy"]):
     async def _iter(self):
         try:
             await self.pre_handle()
-            resp = await self.execute()
-            await self.post_handle(resp)
+
+            if not self._handle_cancel():
+                resp = await self.execute()
+                await self.post_handle(resp)
         except Exception as err:
             if res := self.handle_exception(err) is None:
                 raise err
@@ -105,5 +114,3 @@ class BotView(AbstractBotView[CoreStore, "FSMGameCtxProxy"]):
     @property
     def game(self) -> BlackJackGame:
         return self.ctx.game
-
-
