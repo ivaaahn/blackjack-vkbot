@@ -48,7 +48,7 @@ class BaseApplication(web.Application, Generic[S]):
         return self._config
 
     def _log_request(self, request: Request) -> None:
-        r, query = request, None
+        r, query = request, ""
 
         if r.query_string:
             query = "?" + r.query_string
