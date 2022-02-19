@@ -1,3 +1,4 @@
+import logging
 import typing
 from typing import Generic, TypeVar, Generator, Any, Optional
 
@@ -16,6 +17,9 @@ ContextProxy = TypeVar("ContextProxy")
 
 
 class AbstractBotView(Generic[S, ContextProxy]):
+    class Meta:
+        name = "abstract"
+
     def __init__(self, store: S, context: ContextProxy) -> None:
         self._store = store
         self._context = context
@@ -35,6 +39,12 @@ class AbstractBotView(Generic[S, ContextProxy]):
 class BotView(AbstractBotView[CoreStore, "FSMGameCtxProxy"]):
     def __init__(self, store: CoreStore, context: "FSMGameCtxProxy") -> None:
         super().__init__(store, context)
+        self._name = self.Meta.name or self.__class__.__name__
+        self._logger = store.app.get_logger(f"View {self._name}")
+
+    @property
+    def logger(self) -> logging.Logger:
+        return self._logger
 
     async def execute(self) -> Optional["State"]:
         pass

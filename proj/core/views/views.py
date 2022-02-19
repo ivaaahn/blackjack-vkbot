@@ -8,6 +8,11 @@ START_MSG = "/go"
 __all__ = (
     "TriggerReceivedView",
     "StartActionClickedView",
+    "PlayersAmountClickedView",
+    "RegistrationClicked",
+    "BetReceived",
+    "ActionClicked",
+    "LastActionClicked",
 )
 
 
@@ -134,6 +139,9 @@ class ActionClicked(BotView):
 
 class LastActionClicked(BotView):
     async def execute(self) -> None:
+        self.logger.debug("IN")
+
+        self.logger.debug("GONNA GETTING PAYLOAD")
         if (payload := get_payload(self.ctx.msg)) is None:
             return
 
@@ -142,7 +150,7 @@ class LastActionClicked(BotView):
 
         actions = {
             "stop": lambda: self.interact.end_game(self.ctx),
-            "again": lambda: self.interact.repeat_game(self.ctx),
+            "again": lambda: self.interact.repeat_game  (self.ctx),
         }
 
         try:

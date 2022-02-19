@@ -1,16 +1,11 @@
 import json
-from typing import Optional, Mapping, Type
+from typing import Optional
 
 from aio_pika import IncomingMessage
 
 from proj.core.context import FSMGameCtx
 from proj.core.middlewares import ErrorHandlerMiddleware
-from proj.store import CoreStore
-from proj.store.rabbitmq import ConfigType
-from proj.store.rabbitmq.worker.config import RabbitMQWorkerConfig
-
 from proj.store.rabbitmq.worker.worker import RabbitMQWorker
-
 from proj.store.vk.dataclasses import Update
 
 
@@ -27,7 +22,7 @@ class GameRequestReceiver(RabbitMQWorker):
         updates = self._extract_updates(msg)
 
         if updates:
-            self._logger.debug(f"Updates: {updates}")
+            self.logger.debug(f"Updates: {updates}")
             await self._handle_updates(self._pack_updates(updates))
 
     async def _handle_updates(self, updates: list[Update]) -> None:
@@ -41,6 +36,7 @@ class GameRequestReceiver(RabbitMQWorker):
             chat=update.object.message.peer_id,
             msg=update.object.message,
         ).proxy() as ctx:
+            self.logger.debug(f"State is {ctx.state}")
             await ErrorHandlerMiddleware.exec(ctx.state, self.store, ctx)
 
     @staticmethod

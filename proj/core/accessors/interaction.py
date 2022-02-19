@@ -55,7 +55,7 @@ class GameInteractionAccessor(Accessor[CoreStore, None]):
         limit, offset = 10, 0
         order_by, order_type = "cash", -1
 
-        players = await self.store.players.players.get_players_list(
+        players = await self.store.players.get_players_list(
             vk_id=None,
             chat_id=ctx.chat_id,
             offset=offset,
@@ -292,12 +292,12 @@ class GameInteractionAccessor(Accessor[CoreStore, None]):
                     "Колода закончилась! Данная игра не может быть продолжена",
                     Keyboards.START,
                 )
-                return States.WAITING_FOR_START_CHOICE
+                ctx.state = States.WAITING_FOR_START_CHOICE
             else:
                 await self.handle_results(ctx)
                 await self.show_results(ctx)
                 await self.update_players_data(ctx)
-                return States.WAITING_FOR_LAST_CHOICE
+                ctx.state = States.WAITING_FOR_LAST_CHOICE
 
     async def handle_results(self, ctx: FSMGameCtxProxy):
         ctx.game.define_results()

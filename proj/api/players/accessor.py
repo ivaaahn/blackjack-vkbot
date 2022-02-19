@@ -17,8 +17,6 @@ from ..chats.models import ChatModel
 
 __all__ = ("PlayersAccessor",)
 
-from ..game_settings.config import GameSettingsConfig
-
 from ...config import ConfigType
 from ...store.base import S
 
