@@ -93,12 +93,8 @@ class GameInteractionAccessor(Accessor[CoreStore, None]):
         await self._dispatch(context, curr_player, choice, res)
 
     async def handle_last_action(self, context: FSMGameCtxProxy, payload: str):
-        try:
-            action_handler = self._last_actions_matching[LastActionChoiceType(payload)]
-        except KeyError:
-            self.logger.error("Bad payload")
-        else:
-            await action_handler(context)
+        action_handler = self._last_actions_matching[LastActionChoiceType(payload)]
+        await action_handler(context)
 
     async def _send(
         self,
