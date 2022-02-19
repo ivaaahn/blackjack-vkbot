@@ -141,7 +141,7 @@ class Keyboards:
                 TextButton(
                     label="Встать из-за стола",
                     color=ButtonColor.NEGATIVE,
-                    payload='{"button": "get out"}',
+                    payload='{"button": "leaving the game"}',
                 ),
             ],
         ],

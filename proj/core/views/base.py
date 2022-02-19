@@ -43,11 +43,11 @@ class BotView(AbstractBotView[CoreStore, "FSMGameCtxProxy"]):
         super().__init__(store, context)
         self._name = self.Meta.name or self.__class__.__name__
         self._logger = store.app.get_logger(f"View {self._name}")
-        self._btn_payload: Optional[str] = None
+        self._payload_btn: Optional[str] = None
 
     @property
-    def button_payload(self) -> str:
-        return self._btn_payload
+    def payload_btn(self) -> str:
+        return self._payload_btn
 
     @property
     def logger(self) -> logging.Logger:
@@ -65,10 +65,10 @@ class BotView(AbstractBotView[CoreStore, "FSMGameCtxProxy"]):
         return payload_json.get(key)
 
     def _get_btn_payload(self) -> None:
-        self._btn_payload = self._get_payload(self.ctx.msg, "button")
+        self._payload_btn = self._get_payload(self.ctx.msg, "button")
 
-    def _handle_cancel(self) -> bool:
-        if self.button_payload == "cancel":
+    async def _handle_cancel(self) -> bool:
+        if self.payload_btn == "cancel":
             await self.interact._do_cancel(self.ctx)
             return True
 
@@ -84,7 +84,7 @@ class BotView(AbstractBotView[CoreStore, "FSMGameCtxProxy"]):
         try:
             await self.pre_handle()
 
-            if not self._handle_cancel():
+            if not await self._handle_cancel():
                 resp = await self.execute()
                 await self.post_handle(resp)
         except Exception as err:
@@ -105,7 +105,7 @@ class BotView(AbstractBotView[CoreStore, "FSMGameCtxProxy"]):
         kbd: Keyboard = Keyboards.EMPTY,
         photos: str = "",
     ):
-        await self.store.game_interact.send(self.ctx, txt, kbd, photos)
+        await self.store.game_interact._send(self.ctx, txt, kbd, photos)
 
     @property
     def interact(self) -> "GameInteractionAccessor":
